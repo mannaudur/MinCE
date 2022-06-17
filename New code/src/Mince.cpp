@@ -116,9 +116,9 @@ int main(int argc, char** argv)
     file << "Results from mincing " << filename << ":\n\n";
     for(size_t i = 0; i < results.size(); i++) {
         std::cout << i+1 << ":\t" << results[i].genome << "\t\t\t" << results[i].mutual << "/" << s << "\t" 
-        << "Cluster: " << results[i].atom << std::endl;
+        << "Clique: " << results[i].atom << std::endl;
         file << i+1 << ":\t" << results[i].genome << "\t" << results[i].mutual << "/" << s << "\t" 
-        << "Cluster: " << results[i].atom << "\n\n";
+        << "Clique: " << results[i].atom << "\n\n";
     }
     file.close();
 
