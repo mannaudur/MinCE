@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     }
     auto start = std::chrono::high_resolution_clock::now();
     string filename = argv[argc-1];
-    std::cout << "Mincing " << filename << "...";
+    std::cout << "\n" << "Mincing " << filename << "...\n" << endl;
     uint16_t k = 31;
     uint16_t c = 3;
     uint16_t s = 1000;
@@ -108,16 +108,16 @@ int main(int argc, char** argv)
     auto results = get_results(_sketch.min_hash.data(), _sketch.min_hash.size(), t);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<chrono::seconds>(stop - start);
-    std::cout << "Total duration: " << duration.count() << " seconds\n" << std::endl;
+    std::cout << "\n" << "Total duration: " << duration.count() << " seconds\n" << std::endl;
 
     std::ofstream file;
     file.open(dirpath + get_filename_from_path(filename) + "_mince.txt");
     std::cout << "Results from mincing " << filename << ":\n" << std::endl;
     file << "Results from mincing " << filename << ":\n\n";
     for(size_t i = 0; i < results.size(); i++) {
-        std::cout << i+1 << ":\t" << results[i].genome << "\t\t" << results[i].mutual << "/" << s << "\t" 
+        std::cout << i+1 << ":\t" << results[i].genome << "\t\t\t" << results[i].mutual << "/" << s << "\t" 
         << "Cluster: " << results[i].atom << std::endl;
-        file << i+1 << ":\t" << results[i].genome << "\t\t" << results[i].mutual << "/" << s << "\t" 
+        file << i+1 << ":\t" << results[i].genome << "\t" << results[i].mutual << "/" << s << "\t" 
         << "Cluster: " << results[i].atom << "\n\n";
     }
     file.close();

@@ -24,6 +24,7 @@ using Mutual = std::vector<Pair>;
 
 HashLocator read_hash_locator(const char *hash_locator_filename)
 {
+    std::cout << "Loading hash_locator..." << endl;
     int ret;
     khint64_t k;
     uint64_t hash;
@@ -43,7 +44,7 @@ HashLocator read_hash_locator(const char *hash_locator_filename)
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<chrono::seconds>(stop - start);
-    std::cout << "Time for hash_locator setup: " << duration.count() << " seconds" << std::endl;
+    std::cout << "Time for hash_locator setup: " << duration.count() << " seconds\n" << std::endl;
     return hash_locator;
 }
 
@@ -69,7 +70,7 @@ Indices read_indices(const char *indices_filename)
 
 Mutual find_mutual(uint64_t *min_hash, size_t n)
 {
-    HashLocator hash_locator = read_hash_locator("../../hash_locator");
+    HashLocator hash_locator = read_hash_locator("../../hash_locator.nosync");
     int ret;
     khint64_t k;
     khint64_t h;
@@ -124,7 +125,7 @@ std::vector<Results> get_results(uint64_t *min_hash, size_t min_hash_size, uint1
     std::vector<Results> res;
 
     Mutual mutual = find_mutual(min_hash, min_hash_size);
-    Indices indices = read_indices("../../indices");
+    Indices indices = read_indices("../../indices.nosync");
 
     for (size_t i = 0; i < mutual.size(); ++i)
     {
