@@ -1,0 +1,28 @@
+## Fyrstu skref í MinCE þegar ég er kominn út til Caltech (mögulega, ég veit ekki)
+
+- Þýða mince.py og triangulate.py yfir í C++
+    - Passa að nota Bifröst fyrir hakkafallið, basically bara tengja það inn út sketch
+    - Gæti verið gott að styðjast við b-tré fyrir dist_all()-fallið
+        - Þarf að gera það hraðara einhvern veginn
+- Þýða solve_features.py og deBruijn_solver.py yfir í C++
+    - Gæti þurft að hugsa formattið á atom-skránum upp á nýtt, json er stórt og ekki vinur C++
+    - Þarf að finna fljótlegri leið til að greina það fljótt
+        - Google er vinur minn en ég gæti líka skoðað Burrows-Wheeler transform eða eitthvað álíka
+        - Gæti líka sniðið þetta eins og tré og reynt að finna niðurstöður þannig
+            - Tréð búið til úr þeim nóðum sem á að finna
+            - Sérhver k-mer úr leitarsafninu þýddur yfir í hakkagildi og sendur inn í tréð
+        - Er tvítekning að þýða k-merana yfir í hakkagildi?
+            - Þess þarf ekki, því þetta er algjörlega aðskilið rissunum
+            - Betra að vinna bara með k-mera mengið?
+                - Pottþétt til einhver góð tól til þess að greina slíkt
+                    - Augljóslega myndi ég nota kallisto í það
+- Þýða extract_features.py og deBruijn_extractor.py yfir í C++
+    - Nota mmh3
+        - *Nema ég ætli að vinna bara með k-merana og tengja þetta þannig við kallisto*
+    - Gæti þurft að hugsa formattið á atom-skránum upp á nýtt, json er stórt og ekki vinur C++
+    - Ef ég ætla að gera þetta almennilega, þarf að skoða allt reikniritið upp á nýtt
+        - Tryggja áreiðanleika niðurstaðna
+            - Líklega ómögulegt nema með ítrekuðum tilraunum
+        - Reyna að spara minni og tíma hvar sem ég get
+            - Skoða reikniritið í heild sinni, rissa það upp og greina frá A til Ö
+- Byrja að skilgreina Leiden-undiratóm og útfæra á nýja safninu
