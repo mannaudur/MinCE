@@ -80,7 +80,7 @@ struct Sketch
     }
 
     static Sketch sketch(const char *fastx_filename, uint32_t k_ = 31,
-            uint32_t c_ = 1, uint32_t s_ = 1000)
+            uint32_t c_ = 1, uint32_t s_ = 5000)
     {
         Sketch _sketch;
         _sketch.fastx_filename = fastx_filename;

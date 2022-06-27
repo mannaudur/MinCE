@@ -6,12 +6,14 @@ void print_usage(const char *name)
     static char const s[] =
         "\nUsage: %s [options] (<in.fasta> | <in.fastq>) ...\n\n"
         "Options:\n"
-        "  -k    Size of kmers [default: 21].\n"
+        "  -k    Size of kmers [default: 31].\n"
         "  -c    Candidate set limit [default: 1].\n"
-        "  -s    Size of min hash [default: 1000]. Ignored with -x and"
+        "  -d    Directory to place sketches.\n"
+        "  -s    Size of min hash [default: 5000]. Ignored with -x and "
             "-X options.\n"
-        "  -x    Include all hashes that have a value lower than"
+        "  -x    Include all hashes that have a value lower than "
             "9999999776999205UL.\n"
+        "  -f    Read in txt of fasta file paths to sketch.\n"
         "  -X    Include all hashes that have a value lower than X.\n\n";
     printf(s, name);
 }
@@ -26,7 +28,7 @@ int main(int argc, char** argv)
 
     uint16_t k = 31;
     uint16_t c = 1;
-    uint16_t s = 1000;
+    uint16_t s = 5000;
     bool x = false;
     uint64_t max_hash;
     std::string dirpath = "";
