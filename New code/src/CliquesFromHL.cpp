@@ -194,7 +194,24 @@ int main(int argc, char** argv)
     
     UnionFind uf(sketch_list.size());
     auto clusters = make_clusters(uf, sketch_list, hash_locator, limit);
+    std::ofstream indices("indices");
+    for (int i = 0; i < sketch_list.size(); i++)
+    {
+        auto parent = uf.find(i);
+        khiter_t k = kh_get(vec, clusters, parent);
 
+        auto val = kh_val(clusters, k);
+        if (val->size() > 1)
+        {
+            // Modification required if sketch is member of multiple cliques
+            indices << i << " " << sketch_list[i].fastx_filename << " " << parent << "\n";
+        }
+        else
+        {
+            indices << i << " " << sketch_list[i].fastx_filename.c_str() << " NULL\n";
+        }
+    }
+    indices.close();
     std::vector<std::vector<uint64_t>> clique_log;
     for (khiter_t k = kh_begin(clusters);
          k != kh_end(clusters);
@@ -210,7 +227,9 @@ int main(int argc, char** argv)
           std::ofstream cliques(dirpath + std::to_string(key) + ".clique");
 
           for (auto i : *val)
-            cliques << sketch_list[i].fastx_filename << std::endl;
+            // i is a reference to the line in indices corresponding to said sketch
+            // needed to modify later when cliques become overlapping
+            cliques << i << " " << sketch_list[i].fastx_filename << std::endl;
 
           cliques.close();
           clique_log.push_back( { key, val->size() } );

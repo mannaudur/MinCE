@@ -139,7 +139,7 @@ void print_usage(const char *name)
 {
     static char const s[] = "Usage: %s [options] <file>\n\n"
         "Options:\n"
-        "   -l <u64>    Mininum of mutual k-mers [default: 4980/5000].\n"
+        "   -l <u64>    Mininum of mutual k-mers [default: 4995/5000].\n"
         "   -r          Rep sketch path\n"
         "   -i          Info file name\n"
         "   -h          Show this screen.\n";
@@ -154,9 +154,9 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    uint64_t limit = 4985;
-    std::string rep_path = "";
-    std::string info_file = "";
+    uint64_t limit = 4995;
+    std::string rep_path = "clusters/";
+    std::string info_file = "cluster_log";
 
     int option;
     while ((option = getopt(argc, argv, "l:r:i:h:")) != -1)
@@ -168,6 +168,8 @@ int main(int argc, char** argv)
                 break;
             case 'r':
                 rep_path = optarg;
+                if (rep_path.back() != '/')
+                    rep_path += '/';
                 break;
             case 'i':
                 info_file = optarg;
@@ -177,14 +179,37 @@ int main(int argc, char** argv)
 
     std::vector<Sketch> sketch_list;
     std::vector<std::string> fnames = read(argv[optind]);
+    // Load sketches of database
     sketch_list.reserve(fnames.size());
     for (auto fname : fnames)
     {
         sketch_list.push_back(Sketch::read(fname.c_str()));
     }
+    
     auto hash_locator = make_hash_locator(sketch_list);
     UnionFind uf(sketch_list.size());
     auto clusters = make_clusters(uf, sketch_list, hash_locator, limit);
+
+    // Write hash_locator file
+    std::ofstream hash_locator_file("hash_locator");
+    for (khiter_t k = kh_begin(hash_locator); k != kh_end(hash_locator); ++k)
+    {
+      if (kh_exist(hash_locator, k))
+      {
+        auto key = kh_key(hash_locator, k);
+        auto val = kh_value(hash_locator, k);
+        hash_locator_file << key << " ";
+        for (auto mem : *val)
+        {
+          hash_locator_file << mem << " ";
+        }
+        hash_locator_file << "\n";
+      }
+    }
+    hash_locator_file.close();
+    delete hash_locator;
+
+    // Write indices file
     std::ofstream indices("indices");
     for (int i = 0; i < sketch_list.size(); i++)
     {
@@ -202,23 +227,9 @@ int main(int argc, char** argv)
       }
     }
     indices.close();
-    std::ofstream hash_locator_file("hash_locator");
-    for (khiter_t k = kh_begin(hash_locator); k != kh_end(hash_locator); ++k)
-    {
-      if (kh_exist(hash_locator, k))
-      {
-        auto key = kh_key(hash_locator, k);
-        auto val = kh_value(hash_locator, k);
-        hash_locator_file << key << " ";
-        for (auto mem : *val)
-        {
-          hash_locator_file << mem << " ";
-        }
-        hash_locator_file << "\n";
-      }
-    }
-    hash_locator_file.close();
-    std::vector<std::vector<uint64_t>> clique_log;
+
+    // Write cluster_log file and .cluster files
+    std::vector<std::vector<uint64_t>> cluster_log;
     for (khiter_t k = kh_begin(clusters);
          k != kh_end(clusters);
          ++k)
@@ -230,26 +241,26 @@ int main(int argc, char** argv)
 
         if (val->size() > 1)
         {
-          std::ofstream cliques("cliques/" + std::to_string(key) + ".clique");
+          std::ofstream cluster_file(rep_path + std::to_string(key) + ".cluster");
 
           for (auto i : *val)
-            cliques << sketch_list[i].fastx_filename << std::endl;
+            cluster_file << sketch_list[i].fastx_filename << std::endl;
 
-          cliques.close();
-          clique_log.push_back( { key, val->size() } );
+          cluster_file.close();
+          cluster_log.push_back( { key, val->size() } );
         }
       }
     }
     // Taken from https://stackoverflow.com/a/14419565
-    sort(clique_log.begin(), clique_log.end(),[](const std::vector<uint64_t>& a, const std::vector<uint64_t>& b) 
+    sort(cluster_log.begin(), cluster_log.end(),[](const std::vector<uint64_t>& a, const std::vector<uint64_t>& b) 
     {
         return a[1] > b[1];
     });
 
-    std::ofstream clique_logger("clique_log_"+limit);
-    clique_logger << "Number of cliques: " << clique_log.size() << "\n" << std::endl;
-    for (size_t i = 0; i < clique_log.size(); i++) {
-        clique_logger << clique_log[i][0] << "\t" << clique_log[i][1] << std::endl;
+    std::ofstream cluster_logger(info_file);
+    cluster_logger << "Number of clusters: " << cluster_log.size() << "\n" << std::endl;
+    for (size_t i = 0; i < cluster_log.size(); i++) {
+        cluster_logger << cluster_log[i][0] << "\t" << cluster_log[i][1] << std::endl;
     }
-    clique_logger.close();
+    cluster_logger.close();
 }
