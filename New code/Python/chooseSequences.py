@@ -113,7 +113,6 @@ def assign_sequences(reduced, fasta_indices, connected_to, iter_, available):
         
     return(chosen)
     
-    
 
 def parse_fasta(fasta_path):
         seqs = []

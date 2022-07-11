@@ -128,7 +128,7 @@ def bottom_up_cliques(D, iter_, clean_up = True):
             D[singleton,singleton] = float('inf') #we wanna find the actual closest match
             closest_dist = np.min(D[singleton,:])
             closest_sketches = np.where(D[singleton,:] == closest_dist)[0] #which tells us which member to look for
-            for close_sketch in closest_sketches:
+            for close_sketch in closest_sketches: #We're gonna add this to every clique in mininum distance - effectively overlap
                 clique_thresh = np.argmax(reference_matrix[:,close_sketch]) #which was put into a clique with this threshold
                 clique_id = reference_matrix[clique_thresh,close_sketch].astype(np.int64) #and this is its location in the list
                 if clique_id < 0: # there's a chance the close_sketch is a singleton, though it's very unlikely

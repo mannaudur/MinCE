@@ -13,7 +13,7 @@ void print_usage(const char *name)
     printf(s, name);
 }
 
-void make_bit_matrix(std::string clique_file, std::string dir_path) {
+size_t make_bit_matrix(std::string clique_file, std::string dir_path) {
     CCDBG_Build_opt opt;
     opt.nb_threads = 4;
     opt.verbose = false;
@@ -29,7 +29,7 @@ void make_bit_matrix(std::string clique_file, std::string dir_path) {
 
     ColoredCDBG<> dbg(31);
     dbg.buildGraph(opt);
-    dbg.buildColors(opt); 
+    dbg.buildColors(opt);
 
     std::ofstream outfile(clique_file + ".fasta");
     size_t i = 0;
@@ -42,6 +42,7 @@ void make_bit_matrix(std::string clique_file, std::string dir_path) {
     std::vector<std::string> query_files;
     query_files.push_back(clique_file + ".fasta");
     dbg.search(query_files, clique_file, 0.8, false, opt.nb_threads, opt.verbose);
+    return(dbg.size());
 }
 
 int main(int argc, char* argv[]) 
@@ -56,6 +57,7 @@ int main(int argc, char* argv[])
     std::string dirpath = "";
     std::string batch_file = "";
 
+    size_t size_of_sequence_file;
     int opt;
     while ((opt = getopt(argc, argv, "d:f:")) != -1)
     {
@@ -74,7 +76,8 @@ int main(int argc, char* argv[])
     if (batch_file == "")
         {
             for (; optind < argc; optind++)
-                make_bit_matrix(infile, dirpath);
+                size_of_sequence_file = make_bit_matrix(infile, dirpath);
+                std::cout << size_of_sequence_file << std::endl;
         }
         else
         {
@@ -82,7 +85,8 @@ int main(int argc, char* argv[])
             std::string clique_path;
             while (std::getline(fs, clique_path))
             {
-                make_bit_matrix(clique_path, dirpath);
+                size_of_sequence_file = make_bit_matrix(clique_path, dirpath);
+                std::cout << size_of_sequence_file << std::endl;
                 std::cout << clique_path << " done" << std::endl;
             }
             fs.close();

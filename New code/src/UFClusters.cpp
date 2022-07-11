@@ -105,7 +105,7 @@ khash_t(vector_u64)* make_clusters(
                 const auto j = kh_key(mutual, k);
                 const auto c = kh_value(mutual, k);
 
-                if (c >= limit && uf.find(i) != uf.find(j))
+                if (c > limit && uf.find(i) != uf.find(j))
                 {
                     uf.merge(i, j);
                 }
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     
     auto hash_locator = make_hash_locator(sketch_list);
     UnionFind uf(sketch_list.size());
-    auto clusters = make_clusters(uf, sketch_list, hash_locator, limit);
+    auto clusters = make_clusters(uf, sketch_list, hash_locator, limit-1);
 
     // Write hash_locator file
     std::ofstream hash_locator_file("hash_locator");
