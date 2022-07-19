@@ -179,11 +179,14 @@ def write_unamended_clique_to_disk(new_index, clique_log, names, ids, cluster_pa
             new_index.append([ids[i], name, clique_id])
     return(new_index, clique_log)
 
-def print_clique_log(clique_log):
+def print_clique_log(clique_log, iter_, thresh):
     clique_log.sort(key = lambda x: x[1], reverse = True)
     with open('Overview_of_cliques', 'w') as f:
-        f.write('Number of cliques: ')
-        f.write(str(len(clique_log)) + '\n\n')
+        f.write("Cliques formed with parameters: \n")
+        f.write("Breaking up atoms bigger than "+str(thresh)+"\n")
+        f.write("Iterating bottoms up until distance "+str(iter_)+"\n")
+        f.write("Number of cliques: ")
+        f.write(str(len(clique_log)) + "\n\n")
         for line in clique_log:
             f.write((" ").join(str(entry) for entry in line))
             f.write('\n')
@@ -212,7 +215,7 @@ def clique_every_cluster(all_file, iter_, thresh):
         gc.collect
     del rev_indices
     gc.collect
-    print_clique_log(clique_log)
+    print_clique_log(clique_log, iter_, thresh)
     indices = load_paths('indices')
     for line in new_index:
         indices[int(line[0])] = (" ").join(str(entry) for entry in line)+'\n'

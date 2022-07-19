@@ -22,7 +22,8 @@ find clusters/ -name "*.cluster" > all_clusters.txt
 
 mkdir cliques/
 
-# Creates cliques within union-find clusters and writes results to .clique files in cliques/. Also creates index file, an updated version of indices
+# Creates cliques within union-find clusters and writes results to .clique files in cliques/. 
+# Also creates index file, an updated version of indices, which is probably redundant.
 ## t is threshold of size to break up, clusters of size less than or equal to t will be left alone
 ## i is threshold of distance to stop bottoms up process, cliques a distance more than or equal to i will be lumped into their nearest clique 
 
@@ -32,17 +33,15 @@ find cliques/ -name "*.clique" > all_cliques.txt
 
 # Creates .tsv and .fasta out of clique files, chooses distinguishing k-mers using those files and logs them in .minced file
 
-./NewCode/local/bin/distinguish -k 31 -N 10 -f all_cliques.txt
+./NewCode/local/bin/sequences -k 31 -N 10 -f all_cliques.txt
 
 # Chooses distinguishing k-mers for each clique
 ## k is length of sequences chosen, computed each time as min(k, len(fasta_sequence))
 ## n is number of sequences that appear in each member of clique, computed as min(n, len(all_possible_sequences_in_member))
 
-python3 chooseSequences.py -k 31 -n 10  -B all_cliques.txt
 
-mkdir sequences/
 
-mv cliques/*.seq sequences/
+
 
 #optional: rm -rf cliques/ clusters/ sketches/ genome_fasta_files/ database_of_genomes.txt all_sketches.txt all_clusters.txt all_cliques.txt indices
 

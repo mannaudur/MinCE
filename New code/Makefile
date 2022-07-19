@@ -4,7 +4,7 @@ BIN=local/bin
 SRC=src
 CDEPS=/usr/local/lib/libbifrost.a -lz -pthread
 
-all: $(BIN) $(BIN)/mince $(BIN)/sketch $(BIN)/cluster $(BIN)/distinguish $(BIN)/sift
+all: $(BIN) $(BIN)/mince $(BIN)/sketch $(BIN)/cluster $(BIN)/sequences $(BIN)/hashSequences
 
 $(BIN)/mince: $(SRC)/Mince.cpp
 	$(CC) $(CFLAGS) $(SRC)/Mince.cpp -o $(BIN)/mince $(CDEPS)
@@ -15,13 +15,13 @@ $(BIN)/sketch: $(SRC)/Sketch.cpp $(SRC)/Sketch.hpp
 $(BIN)/cluster: $(SRC)/UFClusters.cpp
 	$(CC) $(CFLAGS) $(SRC)/UFClusters.cpp -o $(BIN)/cluster $(CDEPS)
 
-$(BIN)/distinguish: $(SRC)/Distinguish.cpp
-	$(CC) $(CFLAGS) $(SRC)/Distinguish.cpp -o $(BIN)/distinguish $(CDEPS)
+$(BIN)/sequences: $(SRC)/Sequences.cpp
+	$(CC) $(CFLAGS) $(SRC)/Sequences.cpp -o $(BIN)/sequences $(CDEPS)
 
-$(BIN)/sift: $(SRC)/KmerSieve.cpp
-	$(CC) $(CFLAGS) $(SRC)/KmerSieve.cpp -o $(BIN)/sift $(CDEPS)
+$(BIN)/hashSequences: $(SRC)/makeSeqHashmap.cpp
+	$(CC) $(CFLAGS) $(SRC)/makeSeqHashmap.cpp -o $(BIN)/hashSequences $(CDEPS)
 
 clean:
-	rm -rf $(BIN)/sketch $(BIN)/mince $(BIN)/cluster $(BIN)/distinguish $(BIN)/sift
+	rm -rf $(BIN)/sketch $(BIN)/mince $(BIN)/cluster $(BIN)/sequences $(BIN)/hashSequences
 
 	rm -f *.sketch fastx/*.xsketch fastx/*.msh fastx/*.sketch

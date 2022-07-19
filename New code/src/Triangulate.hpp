@@ -24,7 +24,7 @@ using Mutual = std::vector<Pair>;
 
 HashLocator read_hash_locator(const char *hash_locator_filename)
 {
-    std::cout << "Loading hash_locator..." << endl;
+    std::cout << "Loading hash_locator..." << std::endl;
     int ret;
     khint64_t k;
     uint64_t hash;
@@ -43,7 +43,7 @@ HashLocator read_hash_locator(const char *hash_locator_filename)
             kh_value(hash_locator, k)->push_back(index);
     }
     auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<chrono::seconds>(stop - start);
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
     std::cout << "Time for hash_locator setup: " << duration.count() << " seconds\n" << std::endl;
     return hash_locator;
 }
@@ -52,18 +52,18 @@ Indices read_indices(const char *indices_filename)
 {
     int index;
     std::string genome;
-    std::string atom;
+    std::string clique;
     std::fstream fs(indices_filename, std::ios::in);
     std::string line;
     Indices indices;
     while (std::getline(fs, line))
     {
         std::stringstream ss(line);
-        ss >> index >> genome >> atom;
-        if (atom == "NULL")
+        ss >> index >> genome >> clique;
+        if (clique == "NULL")
             indices.push_back(std::make_pair(genome, -1));
         else
-            indices.push_back(std::make_pair(genome, atoi(atom.c_str())));
+            indices.push_back(std::make_pair(genome, atoi(clique.c_str())));
     }
     return indices;
 }
@@ -116,7 +116,7 @@ struct Results
 {
     uint64_t id;
     uint64_t mutual;
-    int atom;
+    int clique;
     char genome[1024];
 };
 
@@ -136,7 +136,7 @@ std::vector<Results> get_results(uint64_t *min_hash, size_t min_hash_size, uint1
         res_mut.mutual = mutual[i].second;
         memset(res_mut.genome, 0, sizeof(res_mut.genome));
         strcpy(res_mut.genome, indices[res_mut.id].first.c_str());
-        res_mut.atom = indices[res_mut.id].second;
+        res_mut.clique = indices[res_mut.id].second;
         res.push_back(res_mut);
     }
     return res;

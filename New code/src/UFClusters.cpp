@@ -16,31 +16,31 @@ const bool cmp(const Pair x, const Pair y)
 KHASH_MAP_INIT_INT64(vector_u64, std::vector<uint64_t>*);
 KHASH_MAP_INIT_INT64(u64, uint64_t);
 
-khash_t(vector_u64)* make_hash_locator(std::vector<Sketch>& sketch_list)
+khash_t(vector_u64)* make_sketch_hashmap(std::vector<Sketch>& sketch_list)
 {
     int ret;
     khiter_t k;
 
-    khash_t(vector_u64)* hash_locator = kh_init(vector_u64);
+    khash_t(vector_u64)* sketch_hashmap = kh_init(vector_u64);
 
     for (uint64_t i = 0; i < sketch_list.size(); i++)
     {
         Sketch& sketch = sketch_list[i];
         for (uint64_t hash : sketch.min_hash)
         {
-            k = kh_get(vector_u64, hash_locator, hash);
+            k = kh_get(vector_u64, sketch_hashmap, hash);
 
-            if (k == kh_end(hash_locator))
+            if (k == kh_end(sketch_hashmap))
             {
-                k = kh_put(vector_u64, hash_locator, hash, &ret);
-                kh_value(hash_locator, k) = new std::vector<uint64_t>;
+                k = kh_put(vector_u64, sketch_hashmap, hash, &ret);
+                kh_value(sketch_hashmap, k) = new std::vector<uint64_t>;
             }
 
-            kh_value(hash_locator, k)->push_back(i);
+            kh_value(sketch_hashmap, k)->push_back(i);
         }
     }
 
-    return hash_locator;
+    return sketch_hashmap;
 }
 
 std::vector<std::string> read(std::string ifpath)
@@ -63,7 +63,7 @@ std::vector<std::string> read(std::string ifpath)
 khash_t(vector_u64)* make_clusters(
     UnionFind& uf,
     const std::vector<Sketch>& sketch_list,
-    khash_t(vector_u64)* hash_locator,
+    khash_t(vector_u64)* sketch_hashmap,
     const uint64_t limit)
 {
     int ret;
@@ -79,8 +79,8 @@ khash_t(vector_u64)* make_clusters(
         for (auto hash : sketch_list[i].min_hash)
         {
             // Indices of sketches where hash appears.
-            k = kh_get(vector_u64, hash_locator, hash);
-            std::vector<uint64_t>* sketch_indices = kh_value(hash_locator, k);
+            k = kh_get(vector_u64, sketch_hashmap, hash);
+            std::vector<uint64_t>* sketch_indices = kh_value(sketch_hashmap, k);
 
             for (auto j : *sketch_indices)
             {
@@ -154,9 +154,9 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    uint64_t limit = 4995;
+    uint64_t limit = 4996;
     std::string rep_path = "clusters/";
-    std::string info_file = "cluster_log";
+    std::string info_file = "clusters.log";
 
     int option;
     while ((option = getopt(argc, argv, "l:r:i:h:")) != -1)
@@ -186,45 +186,53 @@ int main(int argc, char** argv)
         sketch_list.push_back(Sketch::read(fname.c_str()));
     }
     
-    auto hash_locator = make_hash_locator(sketch_list);
+    auto sketch_hashmap = make_sketch_hashmap(sketch_list);
     UnionFind uf(sketch_list.size());
-    auto clusters = make_clusters(uf, sketch_list, hash_locator, limit-1);
+    auto clusters = make_clusters(uf, sketch_list, sketch_hashmap, limit-1);
 
-    // Write hash_locator file
-    std::ofstream hash_locator_file("hash_locator");
-    for (khiter_t k = kh_begin(hash_locator); k != kh_end(hash_locator); ++k)
+    uint64_t MAX_HASH = 0;
+    
+    // Write sketch.hashmap file
+    std::ofstream sketch_hashmap_file("sketch.hashmap");
+    for (khiter_t k = kh_begin(sketch_hashmap); k != kh_end(sketch_hashmap); ++k)
     {
-      if (kh_exist(hash_locator, k))
+      if (kh_exist(sketch_hashmap, k))
       {
-        auto key = kh_key(hash_locator, k);
-        auto val = kh_value(hash_locator, k);
-        hash_locator_file << key << " ";
+        auto key = kh_key(sketch_hashmap, k);
+        auto val = kh_value(sketch_hashmap, k);
+        sketch_hashmap_file << key << " ";
         for (auto mem : *val)
         {
-          hash_locator_file << mem << " ";
+          sketch_hashmap_file << mem << " ";
+          if(mem > MAX_HASH) {
+              MAX_HASH = mem;
+          }
         }
-        hash_locator_file << "\n";
+        sketch_hashmap_file << "\n";
       }
     }
-    hash_locator_file.close();
-    delete hash_locator;
+    sketch_hashmap_file.close();
+
+    std::ofstream MAX_HASH_LOG("MAX_HASH.log");
+    MAX_HASH_LOG << MAX_HASH << "\n";
+    MAX_HASH_LOG.close();
 
     // Write indices file
     std::ofstream indices("indices");
     for (int i = 0; i < sketch_list.size(); i++)
     {
-      auto parent = uf.find(i);
-      khiter_t k = kh_get(vector_u64, clusters, parent);
+        auto parent = uf.find(i);
+        khiter_t k = kh_get(vector_u64, clusters, parent);
 
-      auto val = kh_val(clusters, k);
-      if (val->size() > 1)
-      {
-        indices << i << " " << sketch_list[i].fastx_filename << " " << parent << "\n";
-      }
-      else
-      {
-        indices << i << " " << sketch_list[i].fastx_filename.c_str() << " NULL\n";
-      }
+        auto val = kh_val(clusters, k);
+        if (val->size() > 1)
+        {
+            indices << i << " " << sketch_list[i].fastx_filename << " " << parent << "\n";
+        }
+        else
+        {
+            indices << i << " " << sketch_list[i].fastx_filename.c_str() << " NULL\n";
+        }
     }
     indices.close();
 
@@ -258,6 +266,7 @@ int main(int argc, char** argv)
     });
 
     std::ofstream cluster_logger(info_file);
+    cluster_logger << "Clusters formed with Union-Find threshold: " << limit << std::endl;
     cluster_logger << "Number of clusters: " << cluster_log.size() << "\n" << std::endl;
     for (size_t i = 0; i < cluster_log.size(); i++) {
         cluster_logger << cluster_log[i][0] << "\t" << cluster_log[i][1] << std::endl;
