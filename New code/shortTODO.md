@@ -1,5 +1,16 @@
 ## Tasks
 
+### Actually next up:
+    - Launched ./trialSequences at around 18:00, Thursday
+    - It's an updated version of the old ./sequences, which doesn't get bogged down in hashing vectorForms and the like
+    - Removed fasta_mapping from the code, so now the fasta sequence IDs are paired with the vectors in Uniques
+    - As soon as that finishes, I run ./hashSequences and create my first fully fledged MinCE library.
+
+    - Why is cliques/118331_0.clique cycling?
+
+    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/41620_00.clique
+    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/46178_02.clique
+    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/163920_0.clique
 
 #### Where I'm at:
     - I've modified most files within MinCE in some way or another. I've set UFClusters to work on clustering with t=4997.

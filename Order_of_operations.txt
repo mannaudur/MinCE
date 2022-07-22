@@ -13,7 +13,8 @@ find genome_fasta_files/ -name "*.fna" > database_of_genomes.txt
 
 mkdir clusters/
 
-# Performs rudementary clustering on dataset with union-find and writes results to .cluster files in clusters/. Also creates hash_locator file and indices file
+# Performs rudementary clustering on dataset with union-find and writes results to .cluster files in clusters/. 
+# Also creates hash_locator file called sketch.hashmap and indices file, which will be replaced later on.
 ## l is threshold for union, meaning number of shared hashes between sketch i and sketch j, needed to join sketch i into union-find cluster containing sketch j
 
 ./NewCode/local/bin/cluster -l 4997 all_sketches.txt
@@ -39,10 +40,14 @@ find cliques/ -name "*.clique" > all_cliques.txt
 ## k is length of sequences chosen, computed each time as min(k, len(fasta_sequence))
 ## n is number of sequences that appear in each member of clique, computed as min(n, len(all_possible_sequences_in_member))
 
+find cliques/ -name "*.sequences" > all_sequences.txt
 
+!!! YOU ARE HERE !!!
+./NewCode/local/bin/hashSequences all_sequences.txt
 
+# Takes all .sequences files and creates the hash_locator file seq.hashmap, using the MinCE index in indices
+# Also creates index file called MinCE_to_NCBI.index, which replaces both indices and index.
 
-
-#optional: rm -rf cliques/ clusters/ sketches/ genome_fasta_files/ database_of_genomes.txt all_sketches.txt all_clusters.txt all_cliques.txt indices
+#optional: rm -rf cliques/ clusters/ sketches/ genome_fasta_files/ database_of_genomes.txt all_sketches.txt all_clusters.txt all_cliques.txt indices index 
 
 # End: That's it. You'd should be able to run ./mince now on your samples.

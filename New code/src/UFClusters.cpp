@@ -200,13 +200,13 @@ int main(int argc, char** argv)
       {
         auto key = kh_key(sketch_hashmap, k);
         auto val = kh_value(sketch_hashmap, k);
+        if(key > MAX_HASH) {
+              MAX_HASH = key;
+          }
         sketch_hashmap_file << key << " ";
         for (auto mem : *val)
         {
           sketch_hashmap_file << mem << " ";
-          if(mem > MAX_HASH) {
-              MAX_HASH = mem;
-          }
         }
         sketch_hashmap_file << "\n";
       }

@@ -106,20 +106,16 @@ void removeDuplicatesAndLogNoOfSeq(khash_t(vector_u64)* seq_locator, Index* inde
     {
         if (kh_exist(seq_locator, k))
         {
-            auto key = kh_key(seq_locator, k);
             auto val = kh_val(seq_locator, k);
 
-            if (val->size() > 1)
-            {
-                std::set<uint64_t> genome_ids;
-                for(auto id : (*val)){
-                    genome_ids.insert(id);
-                }
-                kh_value(seq_locator, k) = new std::vector<uint64_t>;
-                for(auto id : genome_ids) {
-                    kh_value(seq_locator, k)->push_back(id);
-                    (*index)[id].second++;
-                }
+            std::set<uint64_t> genome_ids; // Make a set, which should take care of duplicates
+            for(auto id : (*val)){
+                genome_ids.insert(id);
+            }
+            kh_value(seq_locator, k) = new std::vector<uint64_t>;
+            for(auto non_dupl_id : genome_ids) { // Iterate over set, log +1 for each genome having that sequence
+                kh_value(seq_locator, k)->push_back(non_dupl_id);
+                (*index)[non_dupl_id].second++;
             }
         }
     }
@@ -132,23 +128,24 @@ void printSeqHashMap(khash_t(vector_u64)* seq_locator) {
     std::ofstream seq_locator_file("seq.hashmap");
     for (khiter_t k = kh_begin(seq_locator); k != kh_end(seq_locator); ++k)
     {
-      if (kh_exist(seq_locator, k))
-      {
-        auto key = kh_key(seq_locator, k);
-        auto val = kh_value(seq_locator, k);
-        seq_locator_file << key << " ";
-        for (auto mem : *val)
+        if (kh_exist(seq_locator, k))
         {
-          seq_locator_file << mem << " ";
-          if(mem > MAX_HASH) {
-              MAX_HASH = mem;
-          }
-          if(mem < MIN_HASH) {
-              MIN_HASH = mem;
-          }
+            auto key = kh_key(seq_locator, k);
+            auto val = kh_value(seq_locator, k);
+            if(key > MAX_HASH) {
+                MAX_HASH = key;
+            }
+            if(key < MIN_HASH) {
+                MIN_HASH = key;
+            }
+            seq_locator_file << key << " ";
+            for (auto mem : *val)
+            {
+                seq_locator_file << mem << " ";
+            
+            }
+            seq_locator_file << "\n";
         }
-        seq_locator_file << "\n";
-      }
     }
     seq_locator_file.close();
     std::ofstream min_max_seq("seq.minmax");

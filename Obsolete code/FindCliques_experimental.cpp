@@ -309,7 +309,6 @@ int main(int argc, char** argv)
       }
     }
     hash_locator_file.close();
-    delete hash_locator;
     
     auto sub_cliques = make_cliques(5, clusters, sketch_list);
 

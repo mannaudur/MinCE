@@ -116,6 +116,7 @@ void log_common(khash_t(vec) *hash_locator, khash_t(vec32) *mutual, uint64_t has
 
 std::vector<Result> process(const char *fastx_filename, std::string hashmapdir, uint64_t max_hash_, uint32_t k_, uint32_t c_, bool p)
 {
+    // Strip sketch from this once I don't need debugging anymore.
     std::string fn = fastx_filename;
     Sketch sketch;
     sketch.fastx_filename = fastx_filename;
