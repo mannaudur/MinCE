@@ -54,7 +54,6 @@ void addVectors(std::vector<int>* vec1, std::vector<int>* vec2) {
 
 // Height from opt.filename_ref_in.size() and width from dbg.size() in Distinguish.cpp 
 Uniques readAndReduceBitMatrix(
-    int N,
     std::vector<std::string>* members,
     std::string clique_path,
     khash_t(vector_u64)* connected_to,
@@ -108,10 +107,6 @@ Uniques readAndReduceBitMatrix(
         
     }
 
-    for(auto el : *goal_vector) {
-        el = min(N, el);
-    }
-
     // Taken from https://stackoverflow.com/a/14419565
     std::sort(uniques.begin(), uniques.end(),
           [](const std::pair<std::vector<int>, std::vector<uint64_t>>& a, 
@@ -138,12 +133,12 @@ Uniques readAndReduceBitMatrix(
 }
 
 // Computes column_sum of the connections matrix to determine which member has fewest connections
-size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector) {
+size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector, int N) {
     int max_missing = 0;
     int focus_mem = 0;
     for(int i = 0; i < (*connections).size(); i++) {
         int sum = 0;
-        int goal = (*goal_vector)[i];
+        int goal = std::min((*goal_vector)[i], N);
         for(auto num : (*connections)[i]) {
             sum+=num;
         }
@@ -223,10 +218,10 @@ void logSequenceToMembers(
     }
 }
 
-bool goalsRemaining(Matrix* connections, std::vector<int>* goal_vector) {
+bool goalsRemaining(Matrix* connections, std::vector<int>* goal_vector, int N) {
     for(int i = 0; i < (*connections).size(); i++) {
             int sum = 0;
-            int goal = (*goal_vector)[i];
+            int goal = std::min((*goal_vector)[i], N);
             for(int j = 0; j < (*connections).size(); j++) {
                 sum+=(*connections)[j][i];
             }
@@ -280,9 +275,9 @@ khash_t(vector_u64)* chooseSequences(
             }
         }
     }
-    while(goalsRemaining(connections, goal_vector)) {
+    while(goalsRemaining(connections, goal_vector, N)) {
         // Second pass for higher degrees
-        int focus_member = findFocusMember(connections, goal_vector); // Find member with lowest number of connections
+        int focus_member = findFocusMember(connections, goal_vector, N); // Find member with lowest number of connections
         k = kh_get(vector_u64, connected_to, focus_member); // Then find the location of the member in connected_to hash table
         auto options = kh_value(connected_to, k); // Get a pointer to its value, showing its associated vector forms
         uint64_t focus_row = findFocusRow(N, uniques, options, (*connections)[focus_member]);
@@ -412,7 +407,7 @@ void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_siz
     khash_t(vector_u64)* chosen = kh_init(vector_u64);
     std::vector<int> goal_vector(clique_size_members, 0);
     std::vector<std::string> members;
-    Uniques uniques = readAndReduceBitMatrix(N, &members, infile, connected_to, &goal_vector);
+    Uniques uniques = readAndReduceBitMatrix(&members, infile, connected_to, &goal_vector);
     if(uniques.size() == 0) {
         writeFailedCliqueToFile(infile, &members);
         std::cout << "Clique " << infile << " has no distinguishing kmers to be found" << std::endl;
