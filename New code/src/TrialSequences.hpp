@@ -401,6 +401,26 @@ void writeFailedCliqueToFile(std::string infile, std::vector<std::string>* membe
     seqfile.close();
 }
 
+void writeCliqueTrace(std::string infile, std::vector<std::string>* members, Matrix* connections) {
+    std::size_t PosOfFileExt = infile.find_last_of(".");
+    std::string clique_id = infile.substr(0, PosOfFileExt);
+    std::ofstream tracefile(clique_id + ".trace");
+    int i = 0;
+    for(auto mem : (*members)) {
+        tracefile << i++ << mem << "\n";
+    }
+    tracefile << "\n\n";
+    i = 0;
+    for(auto row : *connections) {
+        tracefile << i++ << "\t";
+        for(auto el : row) {
+            tracefile << el << " ";
+        }
+        tracefile << "\n";
+    }
+    tracefile.close();
+}
+
 void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_size_unitigs, std::string infile) {
     Matrix connections;
     for(int i = 0; i < clique_size_members; i++) {
@@ -421,4 +441,5 @@ void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_siz
     
     chosen = chooseSequences(N, connected_to, chosen, &connections, &uniques, &goal_vector);
     writeFileToSeq(k, infile, clique_size_unitigs, chosen, &members);
+    writeCliqueTrace(infile, &members, &connections);
 }

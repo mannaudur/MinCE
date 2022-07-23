@@ -1,16 +1,10 @@
 ## Tasks
 
 ### Actually next up:
-    - Launched ./trialSequences at around 18:00, Thursday
+    - Launched ./trialSequences at around 14:40, Friday
     - It's an updated version of the old ./sequences, which doesn't get bogged down in hashing vectorForms and the like
     - Removed fasta_mapping from the code, so now the fasta sequence IDs are paired with the vectors in Uniques
-    - As soon as that finishes, I run ./hashSequences and create my first fully fledged MinCE library.
-
-    - Why is cliques/118331_0.clique cycling?
-
-    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/41620_00.clique
-    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/46178_02.clique
-    ./NewCode/local/bin/trialSequences -k 31 -N 10 cliques/163920_0.clique
+    - As soon as that run finishes, I'll run ./hashSequences and create my first fully fledged MinCE library.
 
 #### Where I'm at:
     - I've modified most files within MinCE in some way or another. I've set UFClusters to work on clustering with t=4997.
@@ -29,6 +23,7 @@
             - Next up we choose member 5 as focus_member and choose vector [1,0,1,0,1].
             - Now we've chosen two vectors for member 3, neither of which discerns it from member 1.
             - For larger cliques, the possibility of this number reaching 10 is not out of the question.
+        - I've fixed this with a final pass, distinguishing between all members if possible.
 
 #### Next up:
     - I need to create a new program which takes in all .sequence files + old index file and:
