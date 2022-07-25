@@ -64,6 +64,7 @@ void addSeqToHashMap(std::string path, khash_t(vector_u64)* seq_locator, std::ma
     std::vector<uint64_t> hash_sequences;
     std::ifstream infile(path);
     khiter_t k;
+    Kmer::set_k(31);
     int ret;
     while (std::getline(infile, line)) {
 
@@ -76,7 +77,7 @@ void addSeqToHashMap(std::string path, khash_t(vector_u64)* seq_locator, std::ma
             // output previous line before overwriting id
             // but ONLY if id actually contains something
             if(!id.empty()) {
-                for(auto hash : hash_sequences) {
+                for(uint64_t hash : hash_sequences) {
                     k = kh_get(vector_u64, seq_locator, hash);
 
                     if (k == kh_end(seq_locator))
@@ -96,6 +97,16 @@ void addSeqToHashMap(std::string path, khash_t(vector_u64)* seq_locator, std::ma
             Kmer seq = Kmer(line.c_str());
             hash_sequences.push_back(seq.hash());
         }
+    }
+    for(uint64_t hash : hash_sequences) {
+        k = kh_get(vector_u64, seq_locator, hash);
+
+        if (k == kh_end(seq_locator))
+        {
+            k = kh_put(vector_u64, seq_locator, hash, &ret);
+            kh_value(seq_locator, k) = new std::vector<uint64_t>;
+        }
+        kh_value(seq_locator, k)->push_back(MinCE_id);
     }
 }
 

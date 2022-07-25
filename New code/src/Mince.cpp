@@ -10,7 +10,6 @@ void print_usage(const char *name)
         "Options:\n"
         
         "  -d <path>   Destination directory for sketch(s).\n"
-        "  -a          Run MinCE on a .fasta file (already aligned).\n"
         "  -t          Threshold t/5000 to display as result [default: 4950].\n"
         "  -c          Candidate set limit [default: 3].\n"
         "  -f          Run batch file.\n"
@@ -31,16 +30,14 @@ int main(int argc, char** argv)
     std::cout << "\n" << "Mincing " << filename << "...\n" << endl;
     uint16_t k = 31;
     uint16_t c = 3;
-    uint16_t s = 5000;
     uint16_t t = 4950;
-    bool x = false;
     bool p = false;
-    uint64_t max_hash;
+    uint64_t max_hash = 6725168124769237367;
     std::string hashmapdir = "";
 
     // Setup phase before anything really happens
     int opt;
-    while ((opt = getopt(argc, argv, "d:f:t:c:x:")) != -1)
+    while ((opt = getopt(argc, argv, "d:f:c:t:p:")) != -1)
     {
         switch (opt)
         {
@@ -49,9 +46,6 @@ int main(int argc, char** argv)
                 if (hashmapdir.back() != '/')
                     hashmapdir += '/';
                 break;
-            /*case 'f':
-                batch_file = optarg;
-                break;*/
             case 't':
                 t = atoi(optarg);
                 break;
@@ -66,13 +60,14 @@ int main(int argc, char** argv)
 
     Kmer::set_k(k);
     std::string line;
-    std::fstream fs("MAX_HASH.log", std::ios::in);
-    std::getline(fs, line);
-    max_hash = std::stoull(line);
+
 
     std::vector<Result> results = process(filename, hashmapdir, max_hash, k, c, p);
     printResultsToConsole(t, filename, results);
-    printResultsToFile(t, filename, filename, results); //BLEGH, FIX THIS
+    printResultsToFile(t, filename, results);
 
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    std::cout << "Total runtime: " << duration.count() << " seconds\n" << std::endl;
     return 0;
 }

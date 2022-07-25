@@ -1,4 +1,4 @@
-#include "TrialSequences.hpp"
+#include "Sequences.hpp"
 #include "BitMatrix.hpp"
 
 void print_usage(const char *name)

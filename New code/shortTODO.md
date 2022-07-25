@@ -6,6 +6,9 @@
     - Removed fasta_mapping from the code, so now the fasta sequence IDs are paired with the vectors in Uniques
     - As soon as that run finishes, I'll run ./hashSequences and create my first fully fledged MinCE library.
 
+    - It finished sometime early morning Sunday, however with only 11062 results, instead of 11071...
+    - Though, it seems like the cliques are themselves only 11062, so maybe it's just a bug in Overview_of_cliques, which says they should be 11071.
+
 #### Where I'm at:
     - I've modified most files within MinCE in some way or another. I've set UFClusters to work on clustering with t=4997.
     - When UFClusters finishes, I should run bottomUpCliques on the resulting clusters.

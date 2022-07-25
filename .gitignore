@@ -1,10 +1,8 @@
 *.DS_Store
 .vscode*
 Old\ code*
-New\ code/*.nosync
 New\ code/local/bin/*
 annoy*
 Lesefni*
 tests*
-Mimir_drafts*
-
+MinCE/*

@@ -42,7 +42,6 @@ find cliques/ -name "*.clique" > all_cliques.txt
 
 find cliques/ -name "*.sequences" > all_sequences.txt
 
-!!! YOU ARE HERE !!!
 ./NewCode/local/bin/hashSequences all_sequences.txt
 
 # Takes all .sequences files and creates the hash_locator file seq.hashmap, using the MinCE index in indices
