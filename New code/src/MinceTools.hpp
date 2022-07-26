@@ -1,6 +1,5 @@
 #include <bifrost/CompactedDBG.hpp>
 #include "khash.h"
-#include "Sketch.hpp"
 #include <iomanip>
 
 KHASH_MAP_INIT_INT64(vec, std::vector<uint64_t>*);
@@ -12,6 +11,60 @@ using Stats = std::pair<int, std::pair<int, int>>;
 using Origin = std::pair<std::string, int>;
 using Result = std::pair<Origin, Stats>;
 
+struct CandidateSet {
+    const size_t update(const Kmer);
+    void erase(const Kmer);
+
+    private:
+
+    KmerHashTable<uint32_t> candidates;
+    KmerHashTable<uint32_t>::iterator it;
+};
+
+const size_t CandidateSet::update(const Kmer kmer)
+{
+    it = candidates.find(kmer);
+    return it != candidates.end() ? ++(*it) : candidates.insert(kmer, 1).second;
+}
+
+void CandidateSet::erase(const Kmer kmer)
+{
+    candidates.erase(kmer);
+}
+
+std::string get_filename_from_path(std::string path)
+{
+    size_t last_slash_index = path.find_last_of("\\/");
+    if (std::string::npos != last_slash_index)
+        path.erase(0, last_slash_index + 1);
+    return path;
+}
+
+struct Sketch
+{
+    std::vector<uint64_t> min_hash;
+    std::string fastx_filename;
+    uint64_t max_hash = 0;
+    uint32_t k;
+    uint32_t c;
+    uint32_t s;
+
+    Sketch() = default;
+
+    void write(std::string dirpath = "")
+    {
+        std::string extension = ".Msketch";
+        std::ofstream file;
+        file.open(dirpath + get_filename_from_path(fastx_filename) + extension);
+        file << fastx_filename << '\n';
+        file << k << '\n';
+        file << c << '\n';
+        file << s << '\n';
+        for (auto hash : min_hash)
+            file << hash << '\n';
+        file.close();
+    }
+};
 
 HashLocator read_sketch_hashmap(const char *sketch_hashmap_filename)
 {
@@ -116,16 +169,17 @@ void log_common(khash_t(vec) *hash_locator, khash_t(vec32) *mutual, uint64_t has
 }
 
 std::vector<Result> process(
-    const char* filename, 
+    std::string fn, 
+    std::vector<std::string> files,
     std::string hashmapdir, 
     uint64_t max_hash_, 
     uint32_t k_, 
-    int c_, 
+    size_t c_, 
     bool p)
 {
     // Strip sketch from this once I don't need debugging anymore.
     Sketch sketch;
-    sketch.fastx_filename = filename;
+    sketch.fastx_filename = fn;
     sketch.k = k_;
     sketch.c = c_;
     sketch.max_hash = max_hash_;
@@ -139,36 +193,42 @@ std::vector<Result> process(
     auto start = std::chrono::high_resolution_clock::now();
     khash_t(vec32) *mutual = kh_init(vec32);
 
-    gzFile fp = gzopen(filename, "r");
-    kseq_t *seq = kseq_init(fp);
-
     CandidateSet set;
-    KmerIterator it_end;
 
-    int seq_len;
-    while ((seq_len = kseq_read(seq)) >= 0)
-    {
-        KmerIterator it(seq->seq.s);
+    for(auto filename : files) {
 
-        for (; it != it_end; ++it)
+        gzFile fp = gzopen(filename.c_str(), "r");
+        kseq_t *seq = kseq_init(fp);
+
+        KmerIterator it_end;
+
+        int seq_len;
+        while ((seq_len = kseq_read(seq)) >= 0)
         {
-            const Kmer kmer = it->first.rep();
-            auto hashmer = kmer.hash();
-            if (c_ == set.update(kmer))
+            KmerIterator it(seq->seq.s);
+
+            for (; it != it_end; ++it)
             {
-                if (hashmer <= max_hash_)
+                const Kmer kmer = it->first.rep();
+                auto hashmer = kmer.hash();
+                if (c_ == set.update(kmer))
                 {
-                    log_common(sketch_hashmap, mutual, hashmer, 0);
-                    sketch.min_hash.push_back(kmer.hash());
+                    if (hashmer <= max_hash_)
+                    {
+                        log_common(sketch_hashmap, mutual, hashmer, 0);
+                        sketch.min_hash.push_back(kmer.hash());
+                    }
+                    log_common(seq_hashmap, mutual, hashmer, 1);
                 }
-                log_common(seq_hashmap, mutual, hashmer, 1);
             }
         }
-    }
+        kseq_destroy(seq);
+        gzclose(fp);
+    }  
+
     kh_destroy(vec, sketch_hashmap);
     kh_destroy(vec, seq_hashmap);
-    kseq_destroy(seq);
-    gzclose(fp);
+
     if(p){
         sketch.s = sketch.min_hash.size();
         std::sort(sketch.min_hash.begin(), sketch.min_hash.end());
@@ -209,7 +269,7 @@ std::vector<Result> process(
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
     std::cout << "Time spent just mincing: " << duration.count() << " seconds\n" << std::endl;
     return(results);
-    }
+}
 
 void printResultsToConsole(int T, std::string infile, std::vector<Result> results) {
     int seq_found;
@@ -260,27 +320,30 @@ void printResultsToFile(int T, std::string infile, std::vector<Result> results) 
 
     outfile << infile << std::endl;
 
-    outfile << "\n NCBI identifier of genome: \t\t|   Sketch results:\t| \t  Sequence search results:\t  \n";
-    outfile << "------------------------------------|-------------------|---------------------------------" << std::endl;
+    outfile << "\n NCBI identifier of genome: \t\t|   Sketch results:\t| \t  Sequence search results:\t  |\n";
+    outfile << "----------------------------------------|-----------------------|-----------------------------------------|" << std::endl;
     for(auto res : results) {
         sketch_found = res.second.first;
-        if(sketch_found < T) {
-            break;
-        }
         std::string space1 = "\t\t";
         NCBI_id = res.first.first;
         if(NCBI_id.size() > 30) {
             space1 = "\t";
-        } else if (NCBI_id.size() < 27) {
-            space1 = "\t\t\t";
         }
         seq_found = res.second.second.first;
         seq_total = res.second.second.second;
         ratio = float(seq_found)/float(seq_total);
         sketch_found = res.second.first;
         
-        outfile << "                                 \t|                 \t|                               " << std::endl;
-        outfile << ' ' << NCBI_id << space1 << "|    " << sketch_found << "/5000\t\t" << "|\t     " << seq_found << '/' << seq_total << "  \t\t";
+        outfile << "                                 \t|                 \t|                                  \t  |" << std::endl;
+        outfile << ' ' << NCBI_id << space1 << "|\t" << sketch_found << "/5000\t" << "|\t     " << seq_found << '/' << seq_total << "  \t ";
         outfile << std::fixed << std::setprecision(1) << (ratio)*100 << "%" << std::endl;
     }
+}
+
+void writeTSV(std::string infile, std::vector<Result> results) {
+    std::ofstream outfile(infile + ".tsv");
+    for(auto res : results) {
+        outfile << res.first.first << "\t" << res.second.first << "\t"  << res.second.second.second - res.second.second.first << "\n";
+    }
+    outfile.close();
 }
