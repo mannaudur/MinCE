@@ -22,6 +22,6 @@ $(BIN)/hashSequences: $(SRC)/makeSeqHashmap.cpp
 	$(CC) $(CFLAGS) $(SRC)/makeSeqHashmap.cpp -o $(BIN)/hashSequences $(CDEPS)
 
 clean:
-	rm -rf $(BIN)/sketch $(BIN)/mince $(BIN)/cluster $(BIN)/sequences $(BIN)/hashSequences
+	rm -rf $(BIN)/mince $(BIN)/sketch  $(BIN)/cluster $(BIN)/sequences $(BIN)/hashSequences
 
 	rm -f *.sketch fastx/*.xsketch fastx/*.msh fastx/*.sketch

@@ -10,6 +10,7 @@ Options:
     -h --help   Show this screen.
 """
 
+from re import I
 from docopt import docopt
 import numpy as np
 import gc
@@ -27,27 +28,17 @@ def load_paths(ref_path):
         lines = f.readlines()
         return(lines)
     
-def read_indices_to_rev_dict(path):
-    indices = load_paths(path)
-    rev_indices = dict()
-    for line in indices:
-        entries = line.split(" ")
-        rev_indices[entries[1].strip()] = entries[0]
-    return(rev_indices)
-    
-def distMat(cluster_path, rev_indices):
+def distMat(cluster_path):
     paths = load_paths(cluster_path)
     n = len(paths)
     D = np.zeros((n,n))
     names = []
-    ids = []
     for i in range(n):
         sketch, name = load_sketch(paths[i].strip())
         names.append(name.strip())
-        ids.append(rev_indices[name.strip()])
         for j in range(n):
             D[i,j] = 5000 - len(sketch.intersection(load_sketch(paths[j].strip())[0]))
-    return(D, names, ids)
+    return(D, names)
 
 # Takes in a distance matrix D_, which starts out as the original distance matrix
 # but with each iteration we work with a submatrix of D, corresponding to the
@@ -68,7 +59,7 @@ def simple_cliques_with_subset_merge(D, ids, thresh, reference_matrix):
             add_ = True
             for clq in cliques:
                 #Check if we have a superset in the log or whether difference is only 1 sketch
-                if clq.issubset(merge) or merge.issubset(clq) or min(len(clq-merge),len(merge-clq) < 2):
+                if clq.issubset(merge) or merge.issubset(clq) or min(len(clq-merge),len(merge-clq)) < 3:
                     clq.update(merge) #merge subset with superset
                     add_ = False #don't make a new one
             if add_:
@@ -148,14 +139,14 @@ def bottom_up_cliques(D, iter_, clean_up = True):
             
     return(cliques)
 
-def write_cliques_to_disk(new_index, clique_log, cliques_, names, ids, cluster_path):
+def write_cliques_to_disk(clique_log, cliques_, names, cluster_path):
     cluster_id = cluster_path.split('/')[-1].split('.')[0]
     inner_cluster_dict = dict()
     for i in range(len(cliques_)):
         if(cliques_[i]):
             for j in range(len(cliques_[i])):
                 members = cliques_[i][j]
-                clique_id = cluster_id+"_"+str(i)+str(j)
+                clique_id = cluster_id+"_"+str(i)+"_"+str(j)
                 clique_log.append([clique_id, len(members)])
                 with open('cliques/'+clique_id+".clique", 'w') as f:
                     for mem in members:
@@ -164,27 +155,23 @@ def write_cliques_to_disk(new_index, clique_log, cliques_, names, ids, cluster_p
                             inner_cluster_dict[mem].append(clique_id)
                         else:
                             inner_cluster_dict[mem] = [clique_id]
-    for mem in inner_cluster_dict:
-        clique_id_expanded = (";").join(inner_cluster_dict[mem])
-        new_index.append([ids[mem], names[mem], cluster_id, clique_id_expanded])
-    return(new_index, clique_log)
+    return(clique_log)
 
-def write_unamended_clique_to_disk(new_index, clique_log, names, ids, cluster_path):
+def write_unamended_clique_to_disk(clique_log, names, cluster_path):
     cluster_id = cluster_path.split('/')[-1].split('.')[0]
-    clique_id = cluster_id+"_0"
+    clique_id = cluster_id+"_"
     clique_log.append([clique_id, len(names)])
     with open('cliques/'+clique_id+".clique", 'w') as f:
-        for i,name in enumerate(names):
+        for name in names:
             f.write(name+'\n')
-            new_index.append([ids[i], name, clique_id])
-    return(new_index, clique_log)
+    return(clique_log)
 
 def print_clique_log(clique_log, iter_, thresh):
     clique_log.sort(key = lambda x: x[1], reverse = True)
     with open('Overview_of_cliques', 'w') as f:
         f.write("Cliques formed with parameters: \n")
         f.write("Breaking up atoms bigger than "+str(thresh)+"\n")
-        f.write("Iterating bottoms up until distance "+str(iter_)+"\n")
+        f.write("Iterating bottoms up until distance "+str(iter_+1)+"\n")
         f.write("Number of cliques: ")
         f.write(str(len(clique_log)) + "\n\n")
         for line in clique_log:
@@ -199,27 +186,19 @@ def print_new_index(indices):
                         
 def clique_every_cluster(all_file, iter_, thresh):
     all_paths = load_paths(all_file)
-    rev_indices = read_indices_to_rev_dict('indices')
-    new_index = []
     clique_log = []
     i = 0
     for cluster_path in all_paths:
-        D, names, ids = distMat(cluster_path, rev_indices)
+        D, names = distMat(cluster_path)
         if len(names) > thresh:
             cliques_ = bottom_up_cliques(D, iter_, True)
-            new_index, clique_log = write_cliques_to_disk(new_index, clique_log, cliques_, names, ids, cluster_path)
+            clique_log = write_cliques_to_disk(clique_log, cliques_, names, cluster_path)
         else:
-            new_index, clique_log = write_unamended_clique_to_disk(new_index, clique_log, names, ids, cluster_path)
+            clique_log = write_unamended_clique_to_disk(clique_log, names, cluster_path)
         i += 1
         print(i, "/", len(all_paths), "done")
         gc.collect
-    del rev_indices
-    gc.collect
     print_clique_log(clique_log, iter_, thresh)
-    indices = load_paths('indices')
-    for line in new_index:
-        indices[int(line[0])] = (" ").join(str(entry) for entry in line)+'\n'
-    print_new_index(indices)
     
 def main(args):
     all_file = args['<input_file>']

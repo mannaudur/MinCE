@@ -105,7 +105,7 @@ khash_t(vector_u64)* make_clusters(
                 const auto j = kh_key(mutual, k);
                 const auto c = kh_value(mutual, k);
 
-                if (c > limit && uf.find(i) != uf.find(j))
+                if (c >= limit && uf.find(i) != uf.find(j))
                 {
                     uf.merge(i, j);
                 }
@@ -139,7 +139,7 @@ void print_usage(const char *name)
 {
     static char const s[] = "Usage: %s [options] <file>\n\n"
         "Options:\n"
-        "   -l <u64>    Mininum of mutual k-mers [default: 4995/5000].\n"
+        "   -l <u64>    Mininum of mutual k-mers (halo-threshold) [default: 4995/5000].\n"
         "   -r          Rep sketch path\n"
         "   -i          Info file name\n"
         "   -h          Show this screen.\n";
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    uint64_t limit = 4996;
+    uint64_t limit = 4995;
     std::string rep_path = "clusters/";
     std::string info_file = "clusters.log";
 
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     
     auto sketch_hashmap = make_sketch_hashmap(sketch_list);
     UnionFind uf(sketch_list.size());
-    auto clusters = make_clusters(uf, sketch_list, sketch_hashmap, limit-1);
+    auto clusters = make_clusters(uf, sketch_list, sketch_hashmap, limit);
 
     uint64_t MAX_HASH = 0;
     
@@ -266,7 +266,7 @@ int main(int argc, char** argv)
     });
 
     std::ofstream cluster_logger(info_file);
-    cluster_logger << "Clusters formed with Union-Find threshold: " << limit << std::endl;
+    cluster_logger << "Clusters formed with halo-threshold: " << limit << std::endl;
     cluster_logger << "Number of clusters: " << cluster_log.size() << "\n" << std::endl;
     for (size_t i = 0; i < cluster_log.size(); i++) {
         cluster_logger << cluster_log[i][0] << "\t" << cluster_log[i][1] << std::endl;

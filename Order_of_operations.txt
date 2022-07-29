@@ -17,7 +17,7 @@ mkdir clusters/
 # Also creates hash_locator file called sketch.hashmap and indices file, which will be replaced later on.
 ## l is threshold for union, meaning number of shared hashes between sketch i and sketch j, needed to join sketch i into union-find cluster containing sketch j
 
-./NewCode/local/bin/cluster -l 4997 all_sketches.txt
+./NewCode/local/bin/cluster -l 4995 all_sketches.txt
 
 find clusters/ -name "*.cluster" > all_clusters.txt
 
@@ -28,13 +28,13 @@ mkdir cliques/
 ## t is threshold of size to break up, clusters of size less than or equal to t will be left alone
 ## i is threshold of distance to stop bottoms up process, cliques a distance more than or equal to i will be lumped into their nearest clique 
 
-python3 bottomUpCliques.py -t 5 -i 4 all_clusters.txt
+python3 bottomUpCliques.py -t 7 -i 3 all_clusters.txt
 
 find cliques/ -name "*.clique" > all_cliques.txt
 
 # Creates .tsv and .fasta out of clique files, chooses distinguishing k-mers using those files and logs them in .minced file
 
-./NewCode/local/bin/sequences -k 31 -N 10 -f all_cliques.txt
+./NewCode/local/bin/sequences -k 31 -D 6 -f all_cliques.txt
 
 # Chooses distinguishing k-mers for each clique
 ## k is length of sequences chosen, computed each time as min(k, len(fasta_sequence))

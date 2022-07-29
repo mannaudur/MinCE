@@ -80,7 +80,7 @@ Uniques readAndReduceBitMatrix(
 
         (*members).push_back(genome_NCBI); // Add substring having only NCBI identifier to members
     }
-
+    
     Uniques uniques;
 
     while(std::getline(tsv_data,line))
@@ -142,11 +142,9 @@ size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector) {
     int max_missing = 0;
     int focus_mem = 0;
     for(int i = 0; i < (*connections).size(); i++) {
-        int sum = 0;
+        int sum = (*connections)[i][i];
         int goal = (*goal_vector)[i];
-        for(auto num : (*connections)[i]) {
-            sum+=num;
-        }
+
         if((goal - sum) > max_missing) {
             max_missing = (goal - sum);
             focus_mem = i;
@@ -181,7 +179,7 @@ uint64_t findFocusRow(int N, Uniques* uniques, std::vector<uint64_t>* option_row
 }
 
 
-void logSequenceToMembers(
+void logSequenceToMembers( // This could be run once, instead of multiple times. Just need to tread carefully when fixing it.
     uint64_t chosen_vector_ind,
     khash_t(vector_u64)* chosen,
     khash_t(vector_u64)* connected_to,
@@ -225,11 +223,9 @@ void logSequenceToMembers(
 
 bool goalsRemaining(Matrix* connections, std::vector<int>* goal_vector) {
     for(int i = 0; i < (*connections).size(); i++) {
-            int sum = 0;
+            int sum = (*connections)[i][i];
             int goal = (*goal_vector)[i];
-            for(int j = 0; j < (*connections).size(); j++) {
-                sum+=(*connections)[j][i];
-            }
+            
             if((goal - sum) > 0) {
                 return(true);
             }
@@ -407,7 +403,7 @@ void writeCliqueTrace(std::string infile, std::vector<std::string>* members, Mat
     std::ofstream tracefile(clique_id + ".trace");
     int i = 0;
     for(auto mem : (*members)) {
-        tracefile << i++ << mem << "\n";
+        tracefile << i++ << "\t" << mem << "\n";
     }
     tracefile << "\n\n";
     i = 0;
@@ -436,6 +432,14 @@ void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_siz
     if(uniques.size() == 0) {
         writeFailedCliqueToFile(infile, &members);
         std::cout << "Clique " << infile << " has no distinguishing kmers to be found" << std::endl;
+        string filename("Failed_cliques.txt");
+        std::ofstream failed;
+
+        failed.open(filename, std::ios_base::app);
+        failed << infile << endl;
+        for(auto mem : (members)) {
+            failed << "\t\t" << mem << std::endl;
+        }
         return;
     }
     
