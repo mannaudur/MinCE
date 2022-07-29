@@ -74,9 +74,13 @@ int main(int argc, char* argv[])
             while (std::getline(fs, clique_path))
             {
                 if(D) {
-                    std::size_t inner_dist = clique_path.find_first_of("_")+1;
-                    dist = stoi(clique_path.substr(inner_dist, 1));
-                    N = max((5-dist)*D,5);
+                    std::size_t inner_dist_pos = clique_path.find_first_of("_")+1;
+                    std::string inner_dist = clique_path.substr(inner_dist_pos, 1);
+                    if(inner_dist == ".") {
+                        N = 20;
+                    } else {
+                        N = max((5-stoi(inner_dist))*D,5);
+                    }
                 }
                 tsv_dims = make_bit_matrix_from_clique(k, clique_path);
                 runSequenceFind(k, N, tsv_dims.first, tsv_dims.second, clique_path);
