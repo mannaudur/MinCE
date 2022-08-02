@@ -432,7 +432,7 @@ void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_siz
     if(uniques.size() == 0) {
         writeFailedCliqueToFile(infile, &members);
         std::cout << "Clique " << infile << " has no distinguishing kmers to be found" << std::endl;
-        string filename("Failed_cliques.txt");
+        string filename("failed_cliques.txt");
         std::ofstream failed;
 
         failed.open(filename, std::ios_base::app);

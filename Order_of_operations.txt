@@ -23,10 +23,9 @@ find clusters/ -name "*.cluster" > all_clusters.txt
 
 mkdir cliques/
 
-# Creates cliques within union-find clusters and writes results to .clique files in cliques/. 
-# Also creates index file, an updated version of indices, which is probably redundant.
+# Creates cliques within union-find clusters and writes results to .clique files in cliques/.
 ## t is threshold of size to break up, clusters of size less than or equal to t will be left alone
-## i is threshold of distance to stop bottoms up process, cliques a distance more than or equal to i will be lumped into their nearest clique 
+## i is threshold of distance to stop bottoms up process and start delegating leftovers to nearest clique(s)
 
 python3 bottomUpCliques.py -t 7 -i 3 all_clusters.txt
 
@@ -38,7 +37,8 @@ find cliques/ -name "*.clique" > all_cliques.txt
 
 # Chooses distinguishing k-mers for each clique
 ## k is length of sequences chosen, computed each time as min(k, len(fasta_sequence))
-## n is number of sequences that appear in each member of clique, computed as min(n, len(all_possible_sequences_in_member))
+## N is number of sequences that appear in each member of clique, computed as min(n, len(all_possible_sequences_in_member))
+## D changes N to be dynamic, such that N = max((5-dist)*D,5), where dist refers to f.x. "25025_dist_nr.clique"
 
 find cliques/ -name "*.sequences" > all_sequences.txt
 

@@ -1,0 +1,49 @@
+#OUTDATED, this is not at all the way to do this...
+
+1. From https://data.gtdb.ecogenomic.org/releases/, select the release you want to constitute the MinCE library.
+
+    Example: Current library is built from https://data.gtdb.ecogenomic.org/releases/release207/207.0/
+
+2. Download taxonomy files for both bacteria and archaea.
+    
+    Example: Download bac120_taxonomy_r207.tsv and ar53_taxonomy_r207.tsv
+
+3. Run GTDB_to_FTP.py on both .tsv files, extracting only the Assembly accession identifiers for each genome to a new file "_accession.txt"
+
+    Example: python3 GTDB_to_ASAC.py ar53_taxonomy_r207.tsv -n ar53_accession.txt
+
+4. Download Entrez Direct through the steps described on https://www.ncbi.nlm.nih.gov/books/NBK179288/.
+
+5. For archaea and bacteria, run the accession file against esummary, extracting Id, Assembly Accession and Assembly Name to a new ".index" file
+
+    Example: esummary -db assembly -input ar53_accession.txt | xtract -pattern DocumentSummary -element Id AssemblyAccession AssemblyName > archaea207.index
+
+6. Run Index_to_RSYNC.py on both .index files, creating a "_rsync.txt" file, used for last steps
+
+    Example: python3 GTDB_to_ASAC.py archaea207.index -n ar53_rsync.txt
+
+7. Run rsync to fetch all files in the results .txt files and pipe them into your desired directory
+
+    Example: rsync --copy-links -va --no-relative rsync://ftp.ncbi.nlm.nih.gov/genomes/all/ --files-from=ar53_rsync.txt genomes/
+
+    Comment: This will also take a long time, estimate ~2 genomes per second...
+
+8. For each run of the above, there is a change that the file is suppressed for RefSeq or Genbank. For those files not found, we'd like to try the other option. 
+    
+    8. a) Pipe the resting files into a .txt
+        
+        Example: find genomes/ -name "*.fna.gz" > found_archaea.txt
+
+    8. b) Run retry_missing_genomes.py on that file and the corresponding .index file
+
+        Example: python3 retry_missing_genomes.py found_archaea.txt archaea207.index -n missing_archaea.txt
+
+    8. c) Run resulting files on rsync again.
+
+        Example: rsync --copy-links -va --no-relative rsync://ftp.ncbi.nlm.nih.gov/genomes/all/ --files-from=missing_archaea.txt genomes/
+
+    8. d) Repeat steps 8. a) and 8. b) to find any genomes neither found in RefSeq nor Genbank
+
+        Comment: Store the resulting file from retry_missing_genomes.py as genomes permanently missing from MinCE library
+
+9. That's it, now move onto 'Order_of_operations.txt' for next steps in setting up a new MinCE library.

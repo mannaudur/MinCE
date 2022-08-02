@@ -59,7 +59,7 @@ def simple_cliques_with_subset_merge(D, ids, thresh, reference_matrix):
             add_ = True
             for clq in cliques:
                 #Check if we have a superset in the log or whether difference is only 1 sketch
-                if clq.issubset(merge) or merge.issubset(clq) or min(len(clq-merge),len(merge-clq)) < 3:
+                if clq.issubset(merge) or merge.issubset(clq) or min(len(clq-merge),len(merge-clq)) < 2:
                     clq.update(merge) #merge subset with superset
                     add_ = False #don't make a new one
             if add_:
@@ -159,7 +159,7 @@ def write_cliques_to_disk(clique_log, cliques_, names, cluster_path):
 
 def write_unamended_clique_to_disk(clique_log, names, cluster_path):
     cluster_id = cluster_path.split('/')[-1].split('.')[0]
-    clique_id = cluster_id+"_"
+    clique_id = cluster_id+"_0"
     clique_log.append([clique_id, len(names)])
     with open('cliques/'+clique_id+".clique", 'w') as f:
         for name in names:
