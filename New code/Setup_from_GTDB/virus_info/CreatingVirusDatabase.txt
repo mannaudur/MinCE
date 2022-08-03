@@ -13,5 +13,6 @@ we get accessions for all 11,598 RefSeq viral genomes and store them in the file
     Comment: The library compiled using GTDB references didn't miss any files between accession and index. 
              However, the approach described above did return 20 GCF_* accession files not found on NCBI.
              A quick search revealed that the corresponding GCA_* files could not be found either.
+             Therefore, the final number of genomes was 11,578.
 
 3. The resulting virus.index file is then treated the same way as others, described in HowToMakeNewLibraryFromGTDB.txt.

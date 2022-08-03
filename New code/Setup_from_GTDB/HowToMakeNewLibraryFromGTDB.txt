@@ -45,4 +45,4 @@
 
 9. When all genomes are downloaded, run clean_up_index.py on both archaea and bactera .index files, obtaining the final MinCE.index file.
 
-10. That's it, now move onto 'Order_of_operations.txt' for next steps in setting up a new MinCE library.
+10. That's it, now move onto 'CreatingANewMinCELibrary.txt' for next steps in setting up a new MinCE library.

@@ -28,9 +28,9 @@ def main(args):
 
     index_file = pd.read_csv(index_file, sep="\t", names=["Id", "Accession", "GenBank_ftp", "RefSeq_ftp"])
     for i in range(len(index_file)):
-        link = index_file.loc[i,"GenBank_ftp"]
+        link = index_file.loc[i,"RefSeq_ftp"]
         if pd.isna(link):
-            link = index_file.loc[i,"RefSeq_ftp"]
+            link = index_file.loc[i,"GenBank_ftp"]
             if pd.isna(link):
                 name = index_file.loc[i,"Accession"].replace('GCA', '%temp%').replace('GCF', 'GCA').replace('%temp%', 'GCF')
                 missing.append(name+'\n')
