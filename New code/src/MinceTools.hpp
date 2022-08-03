@@ -141,48 +141,14 @@ Index read_index(const char *index_filename)
     return index;
 }
 
-void log_common(khash_t(vec) *hash_locator, khash_t(vec32) *mutual, uint64_t hash, int id) {
-    khiter_t k;
-    khiter_t h;
-    int ret;
-    k = kh_get(vec, hash_locator, hash);
-    if (k != kh_end(hash_locator))
-    {
-        auto indx = kh_value(hash_locator, k);
-        for (auto j : *indx)
-        {
-            h = kh_get(vec32, mutual, j);
-            if (h != kh_end(mutual))
-            {
-                (*kh_value(mutual, h))[id] += 1;
-            }
-            else
-            {
-                h = kh_put(vec32, mutual, j, &ret);
-                kh_value(mutual, h) = new std::vector<uint32_t>;
-                kh_value(mutual, h)->push_back(0);
-                kh_value(mutual, h)->push_back(0);
-                (*kh_value(mutual, h))[id] = 1;
-            }
-        }
-    }
-}
-
 std::vector<Result> process(
     std::string fn, 
     std::vector<std::string> files,
     std::string hashmapdir, 
     uint64_t max_hash_, 
     uint32_t k_, 
-    size_t c_, 
-    bool p)
+    size_t c_)
 {
-    // Strip sketch from this once I don't need debugging anymore.
-    Sketch sketch;
-    sketch.fastx_filename = fn;
-    sketch.k = k_;
-    sketch.c = c_;
-    sketch.max_hash = max_hash_;
     Kmer::set_k(k_);
 
     std::string sketch_hashmap_path = hashmapdir+"sketch.hashmap";
@@ -194,6 +160,9 @@ std::vector<Result> process(
     khash_t(vec32) *mutual = kh_init(vec32);
 
     CandidateSet set;
+    khiter_t k;
+    khiter_t h;
+    int ret;
 
     for(auto filename : files) {
 
@@ -215,10 +184,49 @@ std::vector<Result> process(
                 {
                     if (hashmer <= max_hash_)
                     {
-                        log_common(sketch_hashmap, mutual, hashmer, 0);
-                        sketch.min_hash.push_back(kmer.hash());
+                        k = kh_get(vec, sketch_hashmap, hashmer);
+                        if (k != kh_end(sketch_hashmap))
+                        {
+                            auto indx = kh_value(sketch_hashmap, k);
+                            for (auto j : *indx)
+                            {
+                                h = kh_get(vec32, mutual, j);
+                                if (h != kh_end(mutual))
+                                {
+                                    (*kh_value(mutual, h))[0] += 1;
+                                }
+                                else
+                                {
+                                    h = kh_put(vec32, mutual, j, &ret);
+                                    kh_value(mutual, h) = new std::vector<uint32_t>;
+                                    kh_value(mutual, h)->push_back(0);
+                                    kh_value(mutual, h)->push_back(0);
+                                    (*kh_value(mutual, h))[0] = 1;
+                                }
+                            }
+                        }
                     }
-                    log_common(seq_hashmap, mutual, hashmer, 1);
+                    k = kh_get(vec, seq_hashmap, hashmer);
+                    if (k != kh_end(seq_hashmap))
+                    {
+                        auto indx = kh_value(seq_hashmap, k);
+                        for (auto j : *indx)
+                        {
+                            h = kh_get(vec32, mutual, j);
+                            if (h != kh_end(mutual))
+                            {
+                                (*kh_value(mutual, h))[1] += 1;
+                            }
+                            else
+                            {
+                                h = kh_put(vec32, mutual, j, &ret);
+                                kh_value(mutual, h) = new std::vector<uint32_t>;
+                                kh_value(mutual, h)->push_back(0);
+                                kh_value(mutual, h)->push_back(0);
+                                (*kh_value(mutual, h))[1] = 1;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -229,14 +237,8 @@ std::vector<Result> process(
     kh_destroy(vec, sketch_hashmap);
     kh_destroy(vec, seq_hashmap);
 
-    if(p){
-        sketch.s = sketch.min_hash.size();
-        std::sort(sketch.min_hash.begin(), sketch.min_hash.end());
-        sketch.write();
-    }
     std::string index_path = hashmapdir+"MinCE_to_NCBI.index";
     Index index = read_index(index_path.c_str());
-    khiter_t k;
     std::vector<Result> results;
     for (k = kh_begin(mutual); k != kh_end(mutual); ++k)
     {
@@ -343,7 +345,7 @@ void printResultsToFile(int T, std::string infile, std::vector<Result> results) 
 void writeTSV(std::string infile, std::vector<Result> results) {
     std::ofstream outfile(infile + ".tsv");
     for(auto res : results) {
-        outfile << res.first.first << "\t" << res.second.first << "\t"  << res.second.second.second - res.second.second.first << "\n";
+        outfile << res.first.first << "\t" << res.second.first << "\t"  << res.second.second.first << "\t" << res.second.second.second << "\n";
     }
     outfile.close();
 }

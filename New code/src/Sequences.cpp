@@ -56,6 +56,13 @@ int main(int argc, char* argv[])
         }
     }
 
+    std::ofstream sequence_log("sequences.log");
+    sequence_log << "Sequences formed from file:\t" << infile << endl;
+    sequence_log << "k:\t" << k << endl;
+    sequence_log << "N:\t" << N << endl;
+    sequence_log << "D:\t" << D << endl;
+    sequence_log.close();
+
     std::ofstream failed_cliques("failed_cliques.txt");
     failed_cliques << "Clique\t\tMembers\n" << endl;
     failed_cliques.close();

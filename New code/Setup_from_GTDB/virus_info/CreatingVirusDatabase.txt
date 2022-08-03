@@ -1,0 +1,17 @@
+This dataset was created on August 3rd 2022 from the RefSeq genome section on https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&SourceDB_s=RefSeq
+
+By choosing Download > Accession List > Nucleotide >> Download All Records >> Accession with version, 
+
+we get accessions for all 11,598 RefSeq viral genomes and store them in the file 'refseq_virus_accession.txt'
+
+1. Run the script to fetch information on said viruses:
+
+    esummary -db assembly -input refseq_virus_accession.txt | xtract -pattern DocumentSummary -element Id, AssemblyAccession, FtpPath_GenBank, FtpPath_RefSeq  > virus.index
+
+2. Run missing_from_index.py on index and accession file, log results as missing if 'GCA'<->'GCF' conversion doesn't work.
+
+    Comment: The library compiled using GTDB references didn't miss any files between accession and index. 
+             However, the approach described above did return 20 GCF_* accession files not found on NCBI.
+             A quick search revealed that the corresponding GCA_* files could not be found either.
+
+3. The resulting virus.index file is then treated the same way as others, described in HowToMakeNewLibraryFromGTDB.txt.

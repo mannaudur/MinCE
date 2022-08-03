@@ -1,4 +1,3 @@
-#OUTDATED, this is not at all the way to do this...
 
 1. From https://data.gtdb.ecogenomic.org/releases/, select the release you want to constitute the MinCE library.
 
@@ -8,42 +7,42 @@
     
     Example: Download bac120_taxonomy_r207.tsv and ar53_taxonomy_r207.tsv
 
-3. Run GTDB_to_FTP.py on both .tsv files, extracting only the Assembly accession identifiers for each genome to a new file "_accession.txt"
+3. Run GTDB_to_ASAC.py on both .tsv files, extracting only the Assembly accession identifiers for each genome to a new file "_accession.txt"
 
     Example: python3 GTDB_to_ASAC.py ar53_taxonomy_r207.tsv -n ar53_accession.txt
 
 4. Download Entrez Direct through the steps described on https://www.ncbi.nlm.nih.gov/books/NBK179288/.
 
-5. For archaea and bacteria, run the accession file against esummary, extracting Id, Assembly Accession and Assembly Name to a new ".index" file
+5. a) For archaea and bacteria, run the accession file against esummary, extracting Id, Assembly Accession and Assembly Name to a new ".index" file
 
-    Example: esummary -db assembly -input ar53_accession.txt | xtract -pattern DocumentSummary -element Id AssemblyAccession AssemblyName > archaea207.index
+    Example: esummary -db assembly -input ar53_accession.txt | xtract -pattern DocumentSummary -element Id, AssemblyAccession, FtpPath_GenBank, FtpPath_RefSeq > archaea207.index
 
-6. Run Index_to_RSYNC.py on both .index files, creating a "_rsync.txt" file, used for last steps
+    Comment: As a safety check, run missing_from_index.py on accession file and index file. Log results as missing if 'GCA'<->'GCF' conversion doesn't work.
 
-    Example: python3 GTDB_to_ASAC.py archaea207.index -n ar53_rsync.txt
+5. b) Run Index_to_RSYNC.py on both .index files, creating one '_rsync.txt' file and one '_missing.txt' file.
 
-7. Run rsync to fetch all files in the results .txt files and pipe them into your desired directory
+    Example: python3 Index_to_RSYNC.py archaea207.index -f ar53_found_1_rsync.txt -m ar53_missing_1.txt
 
-    Example: rsync --copy-links -va --no-relative rsync://ftp.ncbi.nlm.nih.gov/genomes/all/ --files-from=ar53_rsync.txt genomes/
+5. c) Repeat step 5 a) for all '*_missing.txt' files.
 
-    Comment: This will also take a long time, estimate ~2 genomes per second...
+    Example: esummary -db assembly -input ar53_missing.txt | xtract -pattern DocumentSummary -element Id, AssemblyAccession, FtpPath_GenBank, FtpPath_RefSeq > update_archaea207.index
 
-8. For each run of the above, there is a change that the file is suppressed for RefSeq or Genbank. For those files not found, we'd like to try the other option. 
-    
-    8. a) Pipe the resting files into a .txt
-        
-        Example: find genomes/ -name "*.fna.gz" > found_archaea.txt
+5. d) Repeat step 5 b) for each file resulting from step 5 c)
 
-    8. b) Run retry_missing_genomes.py on that file and the corresponding .index file
+    Example: python3 Index_to_RSYNC.py update_archaea207.index -f ar53_found_2_rsync.txt -m ar53_missing_2.txt
 
-        Example: python3 retry_missing_genomes.py found_archaea.txt archaea207.index -n missing_archaea.txt
+6. Log genomes in files '*_missing_2.txt' as members missing from the MinCE library.
 
-    8. c) Run resulting files on rsync again.
+    Comment: Optionally, you can try to fetch the remaining members of '_missing_2.txt' by hand, as other versions may be available.
 
-        Example: rsync --copy-links -va --no-relative rsync://ftp.ncbi.nlm.nih.gov/genomes/all/ --files-from=missing_archaea.txt genomes/
+7. Run rsync to fetch all files in the results '*_found_*_rsync.txt' files and pipe them into your desired directory
 
-    8. d) Repeat steps 8. a) and 8. b) to find any genomes neither found in RefSeq nor Genbank
+    Example: rsync --copy-links -va --no-relative rsync://ftp.ncbi.nlm.nih.gov/genomes/all/ --files-from=ar53_found_1_rsync.txt genomes/
 
-        Comment: Store the resulting file from retry_missing_genomes.py as genomes permanently missing from MinCE library
+    Comment: Depending on your system and internet connection, this might take some time.
 
-9. That's it, now move onto 'Order_of_operations.txt' for next steps in setting up a new MinCE library.
+8. If you have multiple .index files for bacteria or archaea, concatenate them to form one file for each kingdom.
+
+9. When all genomes are downloaded, run clean_up_index.py on both archaea and bactera .index files, obtaining the final MinCE.index file.
+
+10. That's it, now move onto 'Order_of_operations.txt' for next steps in setting up a new MinCE library.

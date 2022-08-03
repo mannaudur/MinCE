@@ -47,7 +47,7 @@ void addVectors(std::vector<int>* vec1, std::vector<int>* vec2) {
         std::cout << "Error: vector sizes not compatible for: \n";
         std::cout << (*vec1).size() << (*vec2).size() << std::endl;
     }
-    for(int i = 0; i < (*vec2).size(); i++) {
+    for(size_t i = 0; i < (*vec2).size(); i++) {
         (*vec1)[i] += (*vec2)[i];
     }
 }
@@ -94,7 +94,7 @@ Uniques readAndReduceBitMatrix(
         }
         bool found = false;
         addVectors(goal_vector, &bit_vector);
-        for(int i = 0; i < uniques.size(); i++) {
+        for(size_t i = 0; i < uniques.size(); i++) {
             if(uniques[i].first == bit_vector) {
                 uniques[i].second.push_back(fasta_ind);
                 found = true;
@@ -108,7 +108,7 @@ Uniques readAndReduceBitMatrix(
         
     }
 
-    for(int i = 0; i < goal_vector->size(); i++) {
+    for(size_t i = 0; i < goal_vector->size(); i++) {
         (*goal_vector)[i] = min(N, (*goal_vector)[i]);
     }
 
@@ -118,9 +118,9 @@ Uniques readAndReduceBitMatrix(
           const std::pair<std::vector<int>, std::vector<uint64_t>>& b) {
         return accumulate(a.first.begin(), a.first.end(), 0) < accumulate(b.first.begin(), b.first.end(), 0);
     });
-    for(int j = 0; j < uniques.size(); j++) { // For each of our unique vectors
+    for(size_t j = 0; j < uniques.size(); j++) { // For each of our unique vectors
         auto bit_vector = uniques[j].first;
-        for(int i = 0; i < bit_vector.size(); i++) // Iterate through our bit vector
+        for(size_t i = 0; i < bit_vector.size(); i++) // Iterate through our bit vector
         {
             if(bit_vector[i]) { // If i = 1 in vector...
                 k = kh_get(vector_u64, connected_to, i);
@@ -141,7 +141,7 @@ Uniques readAndReduceBitMatrix(
 size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector) {
     int max_missing = 0;
     int focus_mem = 0;
-    for(int i = 0; i < (*connections).size(); i++) {
+    for(size_t i = 0; i < (*connections).size(); i++) {
         int sum = (*connections)[i][i];
         int goal = (*goal_vector)[i];
 
@@ -156,7 +156,7 @@ size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector) {
 // Simple dot product calculation
 int dotProd(std::vector<int> unique_row, std::vector<int> connection_column) {
     int sum = 0;
-    for(int i = 0; i < unique_row.size(); i++) {
+    for(size_t i = 0; i < unique_row.size(); i++) {
         sum += (unique_row[i]*connection_column[i]);
     }
     return(sum);
@@ -193,9 +193,9 @@ void logSequenceToMembers( // This could be run once, instead of multiple times.
     auto value = &(*uniques)[chosen_vector_ind].second; // Get the vector of those sequence ids
     uint64_t chosen_sequence; 
     size_t size_of_options = value->size();
-    for(int j = 0; j < min(iter_, size_of_options); j++) {
+    for(size_t j = 0; j < min(iter_, size_of_options); j++) {
         chosen_sequence = value->back(); // Choose the last sequence in the vector
-        for(int i = 0; i < chosen_vector.size(); i++) {
+        for(size_t i = 0; i < chosen_vector.size(); i++) {
             if(chosen_vector[i]){ // For every member taking that sequence
                 k = kh_get(vector_u64, chosen, i); // Find the member's location in chosen hash table
                 if (k == kh_end(chosen))
@@ -222,7 +222,7 @@ void logSequenceToMembers( // This could be run once, instead of multiple times.
 }
 
 bool goalsRemaining(Matrix* connections, std::vector<int>* goal_vector) {
-    for(int i = 0; i < (*connections).size(); i++) {
+    for(size_t i = 0; i < (*connections).size(); i++) {
             int sum = (*connections)[i][i];
             int goal = (*goal_vector)[i];
             
@@ -244,7 +244,7 @@ khash_t(vector_u64)* chooseSequences(
     int ret;
     khiter_t k;
     // First pass with degree 1
-    for (int row_num = 0; row_num < uniques->size(); row_num++)
+    for(size_t row_num = 0; row_num < uniques->size(); row_num++)
     {
         if(accumulate((*uniques)[row_num].first.begin(), (*uniques)[row_num].first.end(), 0) > 1) {
             break; // Now we've reached higher degree vectors in uniques (matrix sorted by degree)
@@ -290,8 +290,8 @@ khash_t(vector_u64)* chooseSequences(
     // so we try to find at least 3 sequences to separate them, if we can.
     std::vector<uint64_t> final_adds;
     const size_t C = 3;
-    for(int i = 0; i < connections->size()-1; i++) {
-        for(int j = i+1; j < connections->size(); j++) {
+    for(size_t i = 0; i < connections->size()-1; i++) {
+        for(size_t j = i+1; j < connections->size(); j++) {
             if((*connections)[i][i] == (*connections)[i][j]) 
             {
                 k = kh_get(vector_u64, connected_to, i); 
@@ -302,7 +302,7 @@ khash_t(vector_u64)* chooseSequences(
                         if(!(*uniques)[opt].first[j])
                             final_adds.push_back(opt);
                     }
-                    for(int M = 0; M < min(final_adds.size(), C); M++) {
+                    for(size_t M = 0; M < min(final_adds.size(), C); M++) {
                         uint64_t focus_row = findFocusRow(N, uniques, &final_adds, (*connections)[i]);
                         logSequenceToMembers(focus_row, chosen, connected_to, connections, uniques, 3);
                     }
@@ -419,7 +419,7 @@ void writeCliqueTrace(std::string infile, std::vector<std::string>* members, Mat
 
 void runSequenceFind(int k, int N, size_t clique_size_members, size_t clique_size_unitigs, std::string infile) {
     Matrix connections;
-    for(int i = 0; i < clique_size_members; i++) {
+    for(size_t i = 0; i < clique_size_members; i++) {
         std::vector<int> vector1(clique_size_members, 0);
         connections.push_back(vector1);
     }

@@ -11,7 +11,7 @@ class UnionFind
 
     UnionFind(size_t n) : n{n}, parent{new int[n]}, rank{new int[n]()}
     {
-        for (int i = 0; i < n; i++)
+        for (size_t i = 0; i < n; i++)
         {
             parent[i] = i;
         }

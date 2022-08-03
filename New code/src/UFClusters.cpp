@@ -117,7 +117,7 @@ khash_t(vector_u64)* make_clusters(
 
     khash_t(vector_u64)* clusters = kh_init(vector_u64);
 
-    for (int x = 0; x < uf.size(); x++)
+    for(int x = 0; x < uf.size(); x++)
     {
         const int parent = uf.find(x);
 
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
 
     // Write indices file
     std::ofstream indices("indices");
-    for (int i = 0; i < sketch_list.size(); i++)
+    for(size_t i = 0; i < sketch_list.size(); i++)
     {
         auto parent = uf.find(i);
         khiter_t k = kh_get(vector_u64, clusters, parent);

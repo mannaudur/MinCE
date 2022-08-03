@@ -166,7 +166,7 @@ void printSeqHashMap(khash_t(vector_u64)* seq_locator) {
 
 void printNewIndex(Index* index) {
     std::ofstream new_index("MinCE_to_NCBI.index");
-    for (int i = 0; i < (*index).size(); i++)
+    for(size_t i = 0; i < (*index).size(); i++)
     {
         new_index << i << " " << (*index)[i].first << " " << (*index)[i].second << "\n";
     }
