@@ -11,61 +11,6 @@ using Stats = std::pair<int, std::pair<int, int>>;
 using Origin = std::pair<std::string, int>;
 using Result = std::pair<Origin, Stats>;
 
-struct CandidateSet {
-    const size_t update(const Kmer);
-    void erase(const Kmer);
-
-    private:
-
-    KmerHashTable<uint32_t> candidates;
-    KmerHashTable<uint32_t>::iterator it;
-};
-
-const size_t CandidateSet::update(const Kmer kmer)
-{
-    it = candidates.find(kmer);
-    return it != candidates.end() ? ++(*it) : candidates.insert(kmer, 1).second;
-}
-
-void CandidateSet::erase(const Kmer kmer)
-{
-    candidates.erase(kmer);
-}
-
-std::string get_filename_from_path(std::string path)
-{
-    size_t last_slash_index = path.find_last_of("\\/");
-    if (std::string::npos != last_slash_index)
-        path.erase(0, last_slash_index + 1);
-    return path;
-}
-
-struct Sketch
-{
-    std::vector<uint64_t> min_hash;
-    std::string fastx_filename;
-    uint64_t max_hash = 0;
-    uint32_t k;
-    uint32_t c;
-    uint32_t s;
-
-    Sketch() = default;
-
-    void write(std::string dirpath = "")
-    {
-        std::string extension = ".Msketch";
-        std::ofstream file;
-        file.open(dirpath + get_filename_from_path(fastx_filename) + extension);
-        file << fastx_filename << '\n';
-        file << k << '\n';
-        file << c << '\n';
-        file << s << '\n';
-        for (auto hash : min_hash)
-            file << hash << '\n';
-        file.close();
-    }
-};
-
 HashLocator read_sketch_hashmap(const char *sketch_hashmap_filename)
 {
     std::cout << "Loading sketch.hashmap..." << endl;
@@ -83,6 +28,7 @@ HashLocator read_sketch_hashmap(const char *sketch_hashmap_filename)
         ss >> hash;
         k = kh_put(vec, sketch_hashmap, hash, &ret);
         kh_value(sketch_hashmap, k) = new std::vector<uint64_t>;
+        kh_value(sketch_hashmap, k)->push_back(0); // Add counter to k-mer spectrum
         while (ss >> index)
             kh_value(sketch_hashmap, k)->push_back(index);
     }
@@ -109,6 +55,7 @@ HashLocator read_seq_hashmap(const char *seq_hashmap_filename)
         ss >> hash;
         k = kh_put(vec, seq_hashmap, hash, &ret);
         kh_value(seq_hashmap, k) = new std::vector<uint64_t>;
+        kh_value(seq_hashmap, k)->push_back(0); // Add counter to k-mer spectrum
         while (ss >> index)
             kh_value(seq_hashmap, k)->push_back(index);
     }
@@ -133,7 +80,6 @@ Index read_index(const char *index_filename)
         std::stringstream ss(line);
         ss >> index_id >> genome >> NOsequences;
         index.push_back(std::make_pair(genome, stoi(NOsequences)));
-        /// ATH INDEX SHOULD HAVE { ID   -   NCBI_NAME   -    NUMBER_OF_SEQUENCES_CONNECTED } FORMAT
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
@@ -141,7 +87,75 @@ Index read_index(const char *index_filename)
     return index;
 }
 
-std::vector<Result> process(
+void logKmerSpectrum(
+    khash_t(vec)* sketch_hashmap, 
+    khash_t(vec)* seq_hashmap, 
+    khash_t(vec32)* mutual,
+    size_t c_) 
+{
+    int ret;
+    khint32_t h;
+    for (khint64_t k = kh_begin(sketch_hashmap);
+        k != kh_end(sketch_hashmap);
+        ++k)
+    {
+        if(!kh_exist(sketch_hashmap,k)) continue;
+
+        auto val = kh_value(sketch_hashmap, k);
+        if((val->size() > 1) && ((*val)[0] >= c_)) {
+
+            for (auto it = std::next(val->begin()); it != val->end(); ++it)
+            {
+                h = kh_get(vec32, mutual, *it);
+                if (h != kh_end(mutual))
+                {
+                    (*kh_value(mutual, h))[0] += 1;
+                }
+                else
+                {
+                    h = kh_put(vec32, mutual, *it, &ret);
+                    kh_value(mutual, h) = new std::vector<uint32_t>;
+                    kh_value(mutual, h)->push_back(0);
+                    kh_value(mutual, h)->push_back(0);
+                    (*kh_value(mutual, h))[0] = 1;
+                }
+            }
+            delete(kh_value(sketch_hashmap, k));
+        }
+    }
+
+    for (khint64_t k = kh_begin(seq_hashmap);
+        k != kh_end(seq_hashmap);
+        ++k)
+    {
+        if(!kh_exist(seq_hashmap,k)) continue;
+
+        auto val = kh_value(seq_hashmap, k);
+        if((val->size() > 1) && ((*val)[0] >= c_)) {
+            
+            for (auto it = std::next(val->begin()); it != val->end(); ++it)
+            {
+                h = kh_get(vec32, mutual, *it);
+                if (h != kh_end(mutual))
+                {
+                    (*kh_value(mutual, h))[1] += 1;
+                }
+                else
+                {
+                    h = kh_put(vec32, mutual, *it, &ret);
+                    kh_value(mutual, h) = new std::vector<uint32_t>;
+                    kh_value(mutual, h)->push_back(0);
+                    kh_value(mutual, h)->push_back(0);
+                    (*kh_value(mutual, h))[1] = 1;
+                }
+            }
+            delete(kh_value(seq_hashmap, k));
+        }
+    }
+}
+
+
+std::vector<Result> mince_fastq(
     std::string fn, 
     std::vector<std::string> files,
     std::string hashmapdir, 
@@ -159,10 +173,7 @@ std::vector<Result> process(
     auto start = std::chrono::high_resolution_clock::now();
     khash_t(vec32) *mutual = kh_init(vec32);
 
-    CandidateSet set;
-    khiter_t k;
-    khiter_t h;
-    int ret;
+    khint64_t k;
 
     for(auto filename : files) {
 
@@ -180,59 +191,30 @@ std::vector<Result> process(
             {
                 const Kmer kmer = it->first.rep();
                 auto hashmer = kmer.hash();
-                if (c_ == set.update(kmer))
+
+                k = kh_get(vec, seq_hashmap, hashmer);
+                if (k != kh_end(seq_hashmap))
                 {
-                    if (hashmer <= max_hash_)
+                    auto indx = kh_value(seq_hashmap, k);
+                    (*indx)[0]++;
+                }
+
+                if (hashmer <= max_hash_)
+                {
+                    k = kh_get(vec, sketch_hashmap, hashmer);
+                    if (k != kh_end(sketch_hashmap))
                     {
-                        k = kh_get(vec, sketch_hashmap, hashmer);
-                        if (k != kh_end(sketch_hashmap))
-                        {
-                            auto indx = kh_value(sketch_hashmap, k);
-                            for (auto j : *indx)
-                            {
-                                h = kh_get(vec32, mutual, j);
-                                if (h != kh_end(mutual))
-                                {
-                                    (*kh_value(mutual, h))[0] += 1;
-                                }
-                                else
-                                {
-                                    h = kh_put(vec32, mutual, j, &ret);
-                                    kh_value(mutual, h) = new std::vector<uint32_t>;
-                                    kh_value(mutual, h)->push_back(0);
-                                    kh_value(mutual, h)->push_back(0);
-                                    (*kh_value(mutual, h))[0] = 1;
-                                }
-                            }
-                        }
-                    }
-                    k = kh_get(vec, seq_hashmap, hashmer);
-                    if (k != kh_end(seq_hashmap))
-                    {
-                        auto indx = kh_value(seq_hashmap, k);
-                        for (auto j : *indx)
-                        {
-                            h = kh_get(vec32, mutual, j);
-                            if (h != kh_end(mutual))
-                            {
-                                (*kh_value(mutual, h))[1] += 1;
-                            }
-                            else
-                            {
-                                h = kh_put(vec32, mutual, j, &ret);
-                                kh_value(mutual, h) = new std::vector<uint32_t>;
-                                kh_value(mutual, h)->push_back(0);
-                                kh_value(mutual, h)->push_back(0);
-                                (*kh_value(mutual, h))[1] = 1;
-                            }
-                        }
+                        auto indx = kh_value(sketch_hashmap, k);
+                        (*indx)[0]++;
                     }
                 }
             }
         }
         kseq_destroy(seq);
         gzclose(fp);
-    }  
+    }
+
+    logKmerSpectrum(sketch_hashmap, seq_hashmap, mutual, c_);
 
     kh_destroy(vec, sketch_hashmap);
     kh_destroy(vec, seq_hashmap);
@@ -254,7 +236,7 @@ std::vector<Result> process(
             Stats stat = std::make_pair(sketch_found, std::make_pair(seq_found,NoOfSeq));
             
             results.push_back(std::make_pair(org, stat));
-        }       
+        }
     }
     kh_destroy(vec32, mutual);
 
@@ -338,7 +320,7 @@ void printResultsToFile(int T, std::string infile, std::vector<Result> results) 
         
         outfile << "                                 \t|                 \t|                                  \t  |" << std::endl;
         outfile << ' ' << NCBI_id << space1 << "|\t" << sketch_found << "/5000\t" << "|\t     " << seq_found << '/' << seq_total << "  \t ";
-        outfile << std::fixed << std::setprecision(1) << (ratio)*100 << "%" << std::endl;
+        outfile << std::fixed << std::setprecision(1) << (ratio)*100 << "%\t\t  |" << std::endl;
     }
 }
 

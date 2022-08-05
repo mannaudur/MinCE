@@ -63,7 +63,7 @@ void addSeqToHashMap(std::string path, khash_t(vector_u64)* seq_locator, std::ma
     uint64_t MinCE_id;
     std::vector<uint64_t> hash_sequences;
     std::ifstream infile(path);
-    khiter_t k;
+    khint64_t k;
     Kmer::set_k(31);
     int ret;
     while (std::getline(infile, line)) {
@@ -111,7 +111,7 @@ void addSeqToHashMap(std::string path, khash_t(vector_u64)* seq_locator, std::ma
 }
 
 void removeDuplicatesAndLogNoOfSeq(khash_t(vector_u64)* seq_locator, Index* index) {
-    for (khiter_t k = kh_begin(seq_locator);
+    for (khint64_t k = kh_begin(seq_locator);
          k != kh_end(seq_locator);
          ++k)
     {
@@ -137,7 +137,7 @@ void printSeqHashMap(khash_t(vector_u64)* seq_locator) {
     uint64_t MIN_HASH = UINT64_MAX;
 
     std::ofstream seq_locator_file("seq.hashmap");
-    for (khiter_t k = kh_begin(seq_locator); k != kh_end(seq_locator); ++k)
+    for (khint64_t k = kh_begin(seq_locator); k != kh_end(seq_locator); ++k)
     {
         if (kh_exist(seq_locator, k))
         {

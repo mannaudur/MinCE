@@ -13,7 +13,7 @@ void print_usage(const char *name)
         "  -t          Threshold t/5000 to display as result [default: 4950].\n"
         "  -c          Candidate set limit [default: 3].\n"
         "  -n          Name of output files.\n"
-        "  -b          Run batch file.\n";
+        "  -b          Run batch file (text file with paths to multiple fastq files, 1 per line).\n";
     printf(s, name);
 }
 
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     auto start = std::chrono::high_resolution_clock::now();
     uint16_t k = 31;
     size_t c = 3;
-    uint16_t t = 4940;
+    uint16_t t = 4950;
     bool b = false;
     uint64_t max_hash = 6725168124769237367;
     std::string hashmapdir = "";
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     }
 
 
-    std::vector<Result> results = process(filename, files, hashmapdir, max_hash, k, c);
+    std::vector<Result> results = mince_fastq(filename, files, hashmapdir, max_hash, k, c);
     printResultsToConsole(t, filename, results);
     printResultsToFile(t, filename, results);
     writeTSV(filename, results);

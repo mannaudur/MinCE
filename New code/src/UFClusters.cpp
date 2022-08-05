@@ -19,7 +19,7 @@ KHASH_MAP_INIT_INT64(u64, uint64_t);
 khash_t(vector_u64)* make_sketch_hashmap(std::vector<Sketch>& sketch_list)
 {
     int ret;
-    khiter_t k;
+    khint64_t k;
 
     khash_t(vector_u64)* sketch_hashmap = kh_init(vector_u64);
 
@@ -67,7 +67,7 @@ khash_t(vector_u64)* make_clusters(
     const uint64_t limit)
 {
     int ret;
-    khiter_t k;
+    khint32_t k;
 
     // UnionFind uf(sketch_list.size());
 
@@ -194,15 +194,15 @@ int main(int argc, char** argv)
     
     // Write sketch.hashmap file
     std::ofstream sketch_hashmap_file("sketch.hashmap");
-    for (khiter_t k = kh_begin(sketch_hashmap); k != kh_end(sketch_hashmap); ++k)
+    for (khint64_t k = kh_begin(sketch_hashmap); k != kh_end(sketch_hashmap); ++k)
     {
       if (kh_exist(sketch_hashmap, k))
       {
         auto key = kh_key(sketch_hashmap, k);
         auto val = kh_value(sketch_hashmap, k);
         if(key > MAX_HASH) {
-              MAX_HASH = key;
-          }
+            MAX_HASH = key;
+        }
         sketch_hashmap_file << key << " ";
         for (auto mem : *val)
         {

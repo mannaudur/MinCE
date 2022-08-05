@@ -103,7 +103,7 @@ def bottom_up_cliques(D, iter_, clean_up = True):
         #print("--- Reached completion at threshold iteration",i,"---")
         return(cliques)
         
-    for i in range(iter_):
+    for i in range(iter_-1):
         D_,ids = clean_up_cliques(D, clq[1]) #Clean up stage between runs
         clq = simple_cliques_with_subset_merge(D_,ids,i+1, reference_matrix)
         # cliques.append(clq[0:2]) #If we wanted singletons as well
@@ -203,7 +203,7 @@ def clique_every_cluster(all_file, iter_, thresh):
 def main(args):
     all_file = args['<input_file>']
     threshold = int(args['-t'])
-    iter_ = int(args['-i'])-1
+    iter_ = int(args['-i'])
     clique_every_cluster(all_file, iter_, threshold)
     print("All done!")
 
