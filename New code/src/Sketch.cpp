@@ -100,7 +100,7 @@ int main(int argc, char** argv)
             std::fstream fs(batch_file, std::ios::in);
             std::string filename;
             while (std::getline(fs, filename))
-                Sketch::sketch(filename.c_str()).write(dirpath);
+                Sketch::sketch(filename.c_str(), k, c, s).write(dirpath);
             fs.close();
         }
     }

@@ -1,7 +1,7 @@
 ## Setting up MinCE 207
 
 1. Set up MinCE on Tölva
-    - Once download is finished, do the same thing to Archaea
+    - *Done*
 2. Start sketching all members of MinCE_207
     - k=31, s=5000 ?
 3. Think about better ways to cluster->clique those members
@@ -12,17 +12,14 @@
     - Choosing fasta-sequencess can be moved outside of general scope
     - Simplify and classify
 5. Redesign the part relating to .hashmap files and how we iterate through a new input file
-    - It has to be faster than this, though I don't immediately see any huge time-saves
+    - *Done*
+    - It isn't faster, but it's waaay more memory-efficient.
+    - A run on a single 8.6Gb (gzipped) file used to take 54Gb.
+    - Now every run, regardless of input file size, uses at most around 5-6Gb RAM.
 6. Write one final script, which takes in a results.tsv file and two parameters, T and R:
-    - Outputs the absolute paths of the top-R genomes in the results file, that have >= T/5000 matching
-        - Whichever breaks first, T or R
-        - How to implement with sequences?
-    - Ideally, it should be something like "inspect", where you can look at results and input f.x. '-T 11' and hit Enter.
-      Then, the program should print the top 11 results to a file, with full absolute paths separated by a space.
-      If you input '-R 4990', the program would print the results having > 4990/5000 in sketch comparison.
-      For '-p 0.5', it outputs results having >= 50% of sequences.
-      For '-l 2', it outputs results having lost less than or equal to 2 sequences.
-      For '-T 11 -R 4990 -p 0.5 -l 2', it would output at most 11 results and, of those, only results satisfying all other constraints.
+    - *Done*
+7. Implement MinCE to work on many threads at once.
+    - Don't know how to do it but it shouldn't be too difficult.
 
 ## Interpreting results from simulated data
 

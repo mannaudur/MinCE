@@ -3,10 +3,10 @@
 #include <getopt.h>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 std::vector<std::string> splitString(std::string in, char sep) {
     std::vector<std::string> r;
-    r.reserve(std::count(in.begin(), in.end(), sep) + 1); // optional
     for (auto p = in.begin();; ++p) {
         auto q = p;
         p = std::find(p, in.end(), sep);
