@@ -154,8 +154,8 @@ size_t findFocusMember(Matrix* connections, std::vector<int>* goal_vector) {
 }
 
 // Simple dot product calculation
-int dotProd(std::vector<int> unique_row, std::vector<int> connection_column) {
-    int sum = 0;
+size_t dotProd(std::vector<int> unique_row, std::vector<int> connection_column) {
+    size_t sum = 0;
     for(size_t i = 0; i < unique_row.size(); i++) {
         sum += (unique_row[i]*connection_column[i]);
     }

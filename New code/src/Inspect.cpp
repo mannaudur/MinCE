@@ -43,7 +43,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    std::string path_to_fastas = "/home/thorhallur/MinCE207/fasta/";
+    std::string path_to_fastas = "/home/thorhallur/newMinCE207/fasta/";
     std::string suffix = "_genomic.fna.gz";
     std::string outname = "";
     size_t x = 0;
@@ -117,7 +117,6 @@ int main(int argc, char** argv)
             if(c) std::cout << path_to_fastas + name + suffix << " ";
             x--;
         }
-        std::cout << sketch << " " << t << " " << x << std::endl;
         if(sketch < t) {
             break;
         }

@@ -124,7 +124,7 @@ def bottom_up_cliques(D, iter_, clean_up = True):
                 clique_id = reference_matrix[clique_thresh,close_sketch].astype(np.int64) #and this is its location in the list
                 if clique_id < 0: # there's a chance the close_sketch is a singleton, though it's somewhat unlikely
                     cliques.append([set([singleton, close_sketch])])
-                    clique_thresh = min(D[singleton, close_sketch].astype(int), D.shape[0]-1)
+                    clique_thresh = min(D[singleton, close_sketch].astype(int), reference_matrix.shape[0]-1)
                     reference_matrix[clique_thresh,singleton] = clique_id
                     reference_matrix[clique_thresh,close_sketch] = clique_id
                 else:
@@ -171,7 +171,7 @@ def print_clique_log(clique_log, iter_, thresh):
     with open('Overview_of_cliques', 'w') as f:
         f.write("Cliques formed with parameters: \n")
         f.write("Breaking up atoms bigger than "+str(thresh)+"\n")
-        f.write("Iterating bottoms up until distance "+str(iter_+1)+"\n")
+        f.write("Iterating bottoms up until distance "+str(iter_)+"\n")
         f.write("Number of cliques: ")
         f.write(str(len(clique_log)) + "\n\n")
         for line in clique_log:

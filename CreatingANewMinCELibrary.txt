@@ -33,7 +33,9 @@ find cliques/ -name "*.clique" > all_cliques.txt
 
 # Creates .tsv and .fasta out of clique files, chooses distinguishing k-mers using those files and logs them in .minced file
 
-./NewCode/local/bin/sequences -k 31 -D 6 -f all_cliques.txt
+# ./NewCode/local/bin/sequences -k 31 -D 6 -f all_cliques.txt fails after ~1870 iterations for some reason
+# instead, do:
+for i in `cat helper_textfiles/cliques_all.txt`; do ../Code_MinCE/local/bin/sequences -N 20 ${i} ; done
 
 # Chooses distinguishing k-mers for each clique
 ## k is length of sequences chosen, computed each time as min(k, len(fasta_sequence))
